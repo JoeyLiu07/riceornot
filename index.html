@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Dinner Dex</title>
+  <title>Rice or not?</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -19,11 +19,10 @@
       --red-bg: #FEF2F2;
       --border: #E2E8F0;
       --radius: 16px;
-      --shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-    body { background-color: var(--bg); color: var(--text); padding-bottom: 40px; }
+    body { background-color: var(--bg); color: var(--text); padding-bottom: 90px; }
 
     header {
       background: var(--card-bg);
@@ -38,27 +37,6 @@
     }
 
     .brand { font-weight: 800; font-size: 1.2rem; color: var(--primary); display: flex; align-items: center; gap: 8px; }
-    
-    .role-selector {
-      background: var(--bg);
-      padding: 4px;
-      border-radius: 99px;
-      display: flex;
-      border: 1px solid var(--border);
-    }
-
-    .role-btn {
-      border: none;
-      background: transparent;
-      padding: 6px 14px;
-      border-radius: 99px;
-      font-weight: 700;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      cursor: pointer;
-    }
-
-    .role-btn.active { background: var(--primary); color: white; }
 
     .container { max-width: 500px; margin: 0 auto; padding: 16px; }
 
@@ -116,10 +94,17 @@
       flex-direction: column;
       justify-content: space-between;
       cursor: pointer;
+      position: relative;
     }
 
     .day-card.empty { background: transparent; border: none; cursor: default; }
     .day-card.today { border: 2px solid var(--primary); }
+    
+    /* Multiselect highlights */
+    .day-card.selected {
+      border: 2px solid var(--primary);
+      background: var(--primary-light);
+    }
 
     .day-num { font-size: 0.75rem; font-weight: 800; color: var(--text-muted); }
 
@@ -146,6 +131,53 @@
       border-radius: 50%;
     }
 
+    /* Floating action toolbar for quick multi-day update */
+    .action-bar {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 32px);
+      max-width: 460px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      border-radius: 18px;
+      padding: 12px 16px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 90;
+    }
+
+    .selected-count {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .action-btns {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .btn-action {
+      flex: 1;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .btn-action.yes { background: var(--green-bg); color: var(--green); border-color: var(--green); }
+    .btn-action.no { background: var(--red-bg); color: var(--red); border-color: var(--red); }
+    
+    /* Modal */
     .modal {
       display: none;
       position: fixed;
@@ -166,34 +198,7 @@
       border-top-left-radius: 24px;
       border-top-right-radius: 24px;
       padding: 24px;
-      box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.1);
     }
-
-    .modal-header { font-weight: 800; font-size: 1.1rem; margin-bottom: 16px; }
-
-    .toggle-group {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    .toggle-btn {
-      padding: 14px;
-      border-radius: 12px;
-      border: 2px solid var(--border);
-      background: var(--bg);
-      font-weight: 800;
-      font-size: 0.9rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .toggle-btn.yes.active { background: var(--green-bg); border-color: var(--green); color: var(--green); }
-    .toggle-btn.no.active { background: var(--red-bg); border-color: var(--red); color: var(--red); }
 
     .remark-input {
       width: 100%;
@@ -202,6 +207,7 @@
       border-radius: 12px;
       font-size: 16px;
       outline: none;
+      margin-top: 12px;
       margin-bottom: 16px;
     }
 
@@ -216,32 +222,12 @@
       font-size: 1rem;
       cursor: pointer;
     }
-
-    .info-box {
-      margin-top: 16px;
-      padding: 12px;
-      background: var(--bg);
-      border-radius: 12px;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-
-    .timestamp-box {
-      margin-top: 10px;
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      text-align: right;
-    }
   </style>
 </head>
 <body>
 
   <header>
-    <div class="brand">🍽️ DinnerDex</div>
-    <div class="role-selector">
-      <button class="role-btn active" id="btnJoey" onclick="setRole('joey')">Joey</button>
-      <button class="role-btn" id="btnCarmen" onclick="setRole('carmen')">Carmen</button>
-    </div>
+    <div class="brand">🍚 Rice or not?</div>
   </header>
 
   <div class="container">
@@ -258,43 +244,34 @@
     <div class="calendar-grid" id="calendarGrid"></div>
   </div>
 
-  <div class="modal" id="dayModal">
+  <!-- Bottom Floating Action Bar for batch edits -->
+  <div class="action-bar" id="actionBar">
+    <div class="action-btns">
+      <button class="btn-action yes" onclick="batchUpdate('YES')">✓ Home (<span id="selectedCountYes">0</span>)</button>
+      <button class="btn-action no" onclick="batchUpdate('NO')">✕ Out (<span id="selectedCountNo">0</span>)</button>
+    </div>
+  </div>
+
+  <!-- Modal for optional Remarks on batch selection -->
+  <div class="modal" id="remarkModal">
     <div class="modal-content">
-      <div class="modal-header" id="modalDateTitle">Date</div>
-      
-      <div class="toggle-group">
-        <button class="toggle-btn yes" id="btnYes" onclick="setSelectStatus('YES')">✓ Home</button>
-        <button class="toggle-btn no" id="btnNo" onclick="setSelectStatus('NO')">✕ Out</button>
-      </div>
-
-      <input type="text" class="remark-input" id="remarkInput" placeholder="Add remarks (e.g., dining out with friends)...">
-
-      <button class="btn-save" id="saveBtn" onclick="saveData()">Save Choice</button>
-
-      <div class="info-box" id="modalOtherInfo"></div>
-      <div class="timestamp-box" id="modalTimestamp"></div>
+      <h3 style="font-size: 1.1rem; font-weight: 800;" id="modalTitle">Set Remarks</h3>
+      <input type="text" class="remark-input" id="remarkInput" placeholder="Add optional remarks for selected dates...">
+      <button class="btn-save" id="saveBtn" onclick="confirmBatchSave()">Save Updates</button>
     </div>
   </div>
 
   <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzeIoJHI8mQJcqywy9h7m5miQIvAQS16W1Glk1bqd2S9uwUEwwONhXEbWs34CebQF2CQQ/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzibHJyOQpLgOyV3RNT-miBNyPH-5cPOystW1oA3NXcusHncWuYOErEfIPpmlCUFsT9AQ/exec";
 
-    let currentRole = 'joey';
-    let monthOffset = 0;
+    let monthOffset = 0; // Starts directly at current month (0)
     let dbData = {};
-    let selectedDateStr = null;
-    let selectedStatus = '';
+    let selectedDates = new Set();
+    let pendingStatus = '';
 
     const now = new Date();
     let currentYear = now.getFullYear();
     let currentMonth = now.getMonth();
-
-    function setRole(role) {
-      currentRole = role;
-      document.getElementById('btnJoey').classList.toggle('active', role === 'joey');
-      document.getElementById('btnCarmen').classList.toggle('active', role === 'carmen');
-      renderCalendar();
-    }
 
     async function fetchData() {
       try {
@@ -309,7 +286,25 @@
     function changeMonth(delta) {
       if (monthOffset + delta < 0 || monthOffset + delta > 2) return;
       monthOffset += delta;
+      selectedDates.clear();
+      updateActionBar();
       renderCalendar();
+    }
+
+    function toggleDateSelection(dateStr) {
+      if (selectedDates.has(dateStr)) {
+        selectedDates.delete(dateStr);
+      } else {
+        selectedDates.add(dateStr);
+      }
+      updateActionBar();
+      renderCalendar();
+    }
+
+    function updateActionBar() {
+      const count = selectedDates.size;
+      document.getElementById('selectedCountYes').innerText = count;
+      document.getElementById('selectedCountNo').innerText = count;
     }
 
     function renderCalendar() {
@@ -339,20 +334,21 @@
         const dayData = dbData[dateStr] || {};
         
         const isToday = dateStr === todayStr;
+        const isSelected = selectedDates.has(dateStr);
 
         const joeySt = dayData.joeyStatus || '';
         const carmenSt = dayData.carmenStatus || '';
 
         grid.innerHTML += `
-          <div class="day-card ${isToday ? 'today' : ''}" onclick="openModal('${dateStr}')">
+          <div class="day-card ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}" onclick="toggleDateSelection('${dateStr}')">
             <div class="day-num">${day}</div>
             <div class="status-stack">
               <div class="status-pill ${getBadgeClass(joeySt)}">
-                <span>Joey: ${getBadgeIcon(joeySt)}</span>
+                <span>J: ${getBadgeIcon(joeySt)}</span>
                 ${dayData.joeyRemarks ? '<span class="remark-dot"></span>' : ''}
               </div>
               <div class="status-pill ${getBadgeClass(carmenSt)}">
-                <span>Carmen: ${getBadgeIcon(carmenSt)}</span>
+                <span>C: ${getBadgeIcon(carmenSt)}</span>
                 ${dayData.carmenRemarks ? '<span class="remark-dot"></span>' : ''}
               </div>
             </div>
@@ -373,62 +369,34 @@
       return '-';
     }
 
-    function openModal(dateStr) {
-      selectedDateStr = dateStr;
-      const dayData = dbData[dateStr] || {};
-      
-      document.getElementById('modalDateTitle').innerText = new Date(dateStr + 'T00:00:00').toLocaleDateString('default', { weekday: 'short', month: 'short', day: 'numeric' });
-
-      selectedStatus = currentRole === 'joey' ? (dayData.joeyStatus || '') : (dayData.carmenStatus || '');
-      document.getElementById('remarkInput').value = currentRole === 'joey' ? (dayData.joeyRemarks || '') : (dayData.carmenRemarks || '');
-
-      updateToggleUI();
-
-      const otherName = currentRole === 'joey' ? "Carmen" : "Joey";
-      const otherStatus = currentRole === 'joey' ? dayData.carmenStatus : dayData.joeyStatus;
-      const otherRemark = currentRole === 'joey' ? dayData.carmenRemarks : dayData.joeyRemarks;
-
-      document.getElementById('modalOtherInfo').innerHTML = `
-        <strong>${otherName}'s Plan:</strong> ${otherStatus ? (otherStatus === 'YES' ? '✓ Home for dinner' : '✕ Out') : 'Not decided yet'}<br>
-        ${otherRemark ? `<em>"${otherRemark}"</em>` : ''}
-      `;
-
-      const lastUpdatedText = dayData.lastUpdated 
-        ? `Last updated: ${new Date(dayData.lastUpdated).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
-        : 'No updates recorded yet';
-      document.getElementById('modalTimestamp').innerText = lastUpdatedText;
-
-      document.getElementById('dayModal').classList.add('open');
+    function batchUpdate(status) {
+      if (selectedDates.size === 0) {
+        alert("Please tap one or more days first!");
+        return;
+      }
+      pendingStatus = status;
+      document.getElementById('modalTitle').innerText = `Update ${selectedDates.size} day(s) to "${status === 'YES' ? 'Home' : 'Out'}"`;
+      document.getElementById('remarkInput').value = '';
+      document.getElementById('remarkModal').classList.add('open');
     }
 
-    function setSelectStatus(st) {
-      selectedStatus = selectedStatus === st ? '' : st;
-      updateToggleUI();
-    }
-
-    function updateToggleUI() {
-      document.getElementById('btnYes').classList.toggle('active', selectedStatus === 'YES');
-      document.getElementById('btnNo').classList.toggle('active', selectedStatus === 'NO');
-    }
-
-    async function saveData() {
+    async function confirmBatchSave() {
       const remarks = document.getElementById('remarkInput').value;
       const saveBtn = document.getElementById('saveBtn');
+      const datesArray = Array.from(selectedDates);
       const nowIso = new Date().toISOString();
-      
+
       saveBtn.innerText = "Saving...";
       saveBtn.disabled = true;
 
-      if (!dbData[selectedDateStr]) dbData[selectedDateStr] = {};
-      if (currentRole === 'joey') {
-        dbData[selectedDateStr].joeyStatus = selectedStatus;
-        dbData[selectedDateStr].joeyRemarks = remarks;
-      } else {
-        dbData[selectedDateStr].carmenStatus = selectedStatus;
-        dbData[selectedDateStr].carmenRemarks = remarks;
-      }
-      dbData[selectedDateStr].lastUpdated = nowIso;
-      
+      // Optimistic state updates across all selected dates
+      datesArray.forEach(dateStr => {
+        if (!dbData[dateStr]) dbData[dateStr] = {};
+        dbData[dateStr].joeyStatus = pendingStatus;
+        if (remarks) dbData[dateStr].joeyRemarks = remarks;
+        dbData[dateStr].lastUpdated = nowIso;
+      });
+
       renderCalendar();
 
       await fetch(GOOGLE_SCRIPT_URL, {
@@ -436,24 +404,28 @@
         mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({
-          user: currentRole,
-          date: selectedDateStr,
-          status: selectedStatus,
+          user: 'joey',
+          dates: datesArray,
+          status: pendingStatus,
           remarks: remarks
         })
       });
 
-      saveBtn.innerText = "Save Choice";
+      saveBtn.innerText = "Save Updates";
       saveBtn.disabled = false;
+      
+      selectedDates.clear();
+      updateActionBar();
       closeModal();
+      renderCalendar();
     }
 
     function closeModal() {
-      document.getElementById('dayModal').classList.remove('open');
+      document.getElementById('remarkModal').classList.remove('open');
     }
 
-    document.getElementById('dayModal').addEventListener('click', (e) => {
-      if (e.target === document.getElementById('dayModal')) closeModal();
+    document.getElementById('remarkModal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('remarkModal')) closeModal();
     });
 
     fetchData();
