@@ -15,6 +15,7 @@
       --primary-light: #EEF2FF;
       --green: #10B981;
       --red: #EF4444;
+      --orange: #F97316; /* Color for Today */
       --border: #E2E8F0;
       --radius: 16px;
     }
@@ -111,7 +112,7 @@
       background: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 12px;
-      min-height: 76px;
+      min-height: 86px;
       padding: 6px;
       display: flex;
       flex-direction: column;
@@ -121,7 +122,15 @@
     }
 
     .day-card.empty { background: transparent; border: none; cursor: default; }
-    .day-card.today { border: 2px solid var(--primary); }
+    
+    /* Highlight today with vibrant orange border */
+    .day-card.today { 
+      border: 2px solid var(--orange); 
+      background: #FFF7ED;
+    }
+    .day-card.today .day-num {
+      color: var(--orange);
+    }
     
     .day-card.selected {
       border: 2px solid var(--primary);
@@ -130,7 +139,7 @@
 
     .day-num { font-size: 0.75rem; font-weight: 800; color: var(--text-muted); }
 
-    .status-stack { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
+    .status-stack { display: flex; gap: 4px; margin-top: 4px; }
     
     /* Compact Circular Badge Styling for J and C */
     .status-circle {
@@ -143,22 +152,25 @@
       align-items: center;
       justify-content: center;
       color: white;
-      position: relative;
     }
 
     .status-yes { background-color: var(--green); }
     .status-no { background-color: var(--red); }
     .status-unset { background-color: #E2E8F0; color: var(--text-muted); }
 
-    .remark-dot {
-      width: 4px;
-      height: 4px;
-      background: #000;
-      border: 1px solid #FFF;
-      border-radius: 50%;
-      position: absolute;
-      top: 0;
-      right: 0;
+    /* Remarks Box inside calendar tile */
+    .remarks-box {
+      font-size: 0.6rem;
+      line-height: 1.1;
+      color: var(--text);
+      background: #F1F5F9;
+      border-radius: 4px;
+      padding: 2px 4px;
+      margin-top: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 600;
     }
 
     .action-bar {
@@ -371,25 +383,32 @@
         const joeySt = dayData.joeyStatus || '';
         const carmenSt = dayData.carmenStatus || '';
 
+        // Combine remarks if present
+        let remarksText = '';
+        if (dayData.joeyRemarks) remarksText += `J: ${dayData.joeyRemarks} `;
+        if (dayData.carmenRemarks) remarksText += `C: ${dayData.carmenRemarks}`;
+
         grid.innerHTML += `
           <div class="day-card ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}" onclick="toggleDateSelection('${dateStr}')">
             <div class="day-num">${day}</div>
-            <div class="status-stack">
-              ${renderBadge('J', joeySt, dayData.joeyRemarks)}
-              ${renderBadge('C', carmenSt, dayData.carmenRemarks)}
+            <div>
+              <div class="status-stack">
+                ${renderBadge('J', joeySt)}
+                ${renderBadge('C', carmenSt)}
+              </div>
+              ${remarksText ? `<div class="remarks-box" title="${remarksText}">${remarksText}</div>` : ''}
             </div>
           </div>
         `;
       }
     }
 
-    function renderBadge(shortName, status, remarks) {
-      const dot = remarks ? '<span class="remark-dot"></span>' : '';
+    function renderBadge(shortName, status) {
       if (status === 'YES') {
-        return `<div class="status-circle status-yes" title="Home">${shortName}${dot}</div>`;
+        return `<div class="status-circle status-yes" title="Home">${shortName}</div>`;
       }
       if (status === 'NO') {
-        return `<div class="status-circle status-no" title="Out">${shortName}${dot}</div>`;
+        return `<div class="status-circle status-no" title="Out">${shortName}</div>`;
       }
       return `<div class="status-circle status-unset">${shortName}</div>`;
     }
@@ -429,17 +448,21 @@
 
       renderCalendar();
 
-      await fetch(GOOGLE_SCRIPT_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({
-          user: currentUser,
-          dates: datesArray,
-          status: pendingStatus,
-          remarks: remarks
-        })
-      });
+      try {
+        await fetch(GOOGLE_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({
+            user: currentUser,
+            dates: datesArray,
+            status: pendingStatus,
+            remarks: remarks
+          })
+        });
+      } catch (err) {
+        console.error("Save error:", err);
+      }
 
       saveBtn.innerText = "Save Updates";
       saveBtn.disabled = false;
