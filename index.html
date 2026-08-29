@@ -15,7 +15,7 @@
       --primary-light: #EEF2FF;
       --green: #10B981;
       --red: #EF4444;
-      --orange: #F97316; /* Color for Today */
+      --orange: #F97316;
       --border: #E2E8F0;
       --radius: 16px;
     }
@@ -123,7 +123,6 @@
 
     .day-card.empty { background: transparent; border: none; cursor: default; }
     
-    /* Highlight today with vibrant orange border */
     .day-card.today { 
       border: 2px solid var(--orange); 
       background: #FFF7ED;
@@ -141,7 +140,6 @@
 
     .status-stack { display: flex; gap: 4px; margin-top: 4px; }
     
-    /* Compact Circular Badge Styling for J and C */
     .status-circle {
       font-size: 0.65rem;
       font-weight: 800;
@@ -158,7 +156,6 @@
     .status-no { background-color: var(--red); }
     .status-unset { background-color: #E2E8F0; color: var(--text-muted); }
 
-    /* Remarks Box inside calendar tile */
     .remarks-box {
       font-size: 0.6rem;
       line-height: 1.1;
@@ -297,7 +294,7 @@
   </div>
 
   <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyo8cyUJM4AWjBbX2Chrw5ndx8wBNC2RLqjQ0VBM0XF3pZFCTWlIc6hLW_CfV58Up4z8w/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzibHJyOQpLgOyV3RNT-miBNyPH-5cPOystW1oA3NXcusHncWuYOErEfIPpmlCUFsT9AQ/exec";
 
     let monthOffset = 0;
     let dbData = {};
@@ -310,6 +307,7 @@
     let currentMonth = now.getMonth();
 
     renderCalendar();
+    fetchData();
 
     async function fetchData() {
       try {
@@ -383,7 +381,6 @@
         const joeySt = dayData.joeyStatus || '';
         const carmenSt = dayData.carmenStatus || '';
 
-        // Combine remarks if present
         let remarksText = '';
         if (dayData.joeyRemarks) remarksText += `J: ${dayData.joeyRemarks} `;
         if (dayData.carmenRemarks) remarksText += `C: ${dayData.carmenRemarks}`;
@@ -449,17 +446,21 @@
       renderCalendar();
 
       try {
+        const payload = JSON.stringify({
+          user: currentUser,
+          dates: datesArray,
+          status: pendingStatus,
+          remarks: remarks
+        });
+
         await fetch(GOOGLE_SCRIPT_URL, {
           method: 'POST',
           mode: 'no-cors',
-          headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify({
-            user: currentUser,
-            dates: datesArray,
-            status: pendingStatus,
-            remarks: remarks
-          })
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: payload
         });
+
+        setTimeout(fetchData, 1500);
       } catch (err) {
         console.error("Save error:", err);
       }
@@ -480,8 +481,6 @@
     document.getElementById('remarkModal').addEventListener('click', (e) => {
       if (e.target === document.getElementById('remarkModal')) closeModal();
     });
-
-    fetchData();
   </script>
 </body>
 </html>
