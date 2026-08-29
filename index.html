@@ -14,9 +14,7 @@
       --primary: #4F46E5;
       --primary-light: #EEF2FF;
       --green: #10B981;
-      --green-bg: #ECFDF5;
       --red: #EF4444;
-      --red-bg: #FEF2F2;
       --border: #E2E8F0;
       --radius: 16px;
     }
@@ -26,7 +24,7 @@
 
     header {
       background: var(--card-bg);
-      padding: 16px 20px;
+      padding: 12px 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -36,7 +34,32 @@
       z-index: 50;
     }
 
-    .brand { font-weight: 800; font-size: 1.2rem; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+    .brand { font-weight: 800; font-size: 1.1rem; color: var(--primary); display: flex; align-items: center; gap: 6px; }
+
+    .role-toggle {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px;
+      display: flex;
+      gap: 2px;
+    }
+
+    .role-btn {
+      border: none;
+      background: transparent;
+      padding: 4px 10px;
+      border-radius: 16px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .role-btn.active {
+      background: var(--primary);
+      color: white;
+    }
 
     .container { max-width: 500px; margin: 0 auto; padding: 16px; }
 
@@ -100,7 +123,6 @@
     .day-card.empty { background: transparent; border: none; cursor: default; }
     .day-card.today { border: 2px solid var(--primary); }
     
-    /* Multiselect highlights */
     .day-card.selected {
       border: 2px solid var(--primary);
       background: var(--primary-light);
@@ -108,30 +130,37 @@
 
     .day-num { font-size: 0.75rem; font-weight: 800; color: var(--text-muted); }
 
-    .status-stack { display: flex; flex-direction: column; gap: 3px; margin-top: 4px; }
+    .status-stack { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
     
-    .status-pill {
+    /* Compact Circular Badge Styling for J and C */
+    .status-circle {
       font-size: 0.65rem;
-      font-weight: 700;
-      padding: 2px 4px;
-      border-radius: 4px;
-      display: flex;
+      font-weight: 800;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: inline-flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: center;
+      color: white;
+      position: relative;
     }
 
-    .status-yes { background: var(--green-bg); color: var(--green); }
-    .status-no { background: var(--red-bg); color: var(--red); }
-    .status-unset { background: var(--bg); color: var(--text-muted); }
+    .status-yes { background-color: var(--green); }
+    .status-no { background-color: var(--red); }
+    .status-unset { background-color: #E2E8F0; color: var(--text-muted); }
 
     .remark-dot {
       width: 4px;
       height: 4px;
-      background: currentColor;
+      background: #000;
+      border: 1px solid #FFF;
       border-radius: 50%;
+      position: absolute;
+      top: 0;
+      right: 0;
     }
 
-    /* Floating action toolbar for quick multi-day update */
     .action-bar {
       position: fixed;
       bottom: 20px;
@@ -151,13 +180,6 @@
       z-index: 90;
     }
 
-    .selected-count {
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: var(--text-muted);
-      white-space: nowrap;
-    }
-
     .action-btns {
       display: flex;
       gap: 8px;
@@ -174,10 +196,9 @@
       cursor: pointer;
     }
 
-    .btn-action.yes { background: var(--green-bg); color: var(--green); border-color: var(--green); }
-    .btn-action.no { background: var(--red-bg); color: var(--red); border-color: var(--red); }
+    .btn-action.yes { background: #ECFDF5; color: var(--green); border-color: var(--green); }
+    .btn-action.no { background: #FEF2F2; color: var(--red); border-color: var(--red); }
     
-    /* Modal */
     .modal {
       display: none;
       position: fixed;
@@ -228,6 +249,10 @@
 
   <header>
     <div class="brand">🍚 Rice or not?</div>
+    <div class="role-toggle">
+      <button class="role-btn active" id="roleJoey" onclick="setRole('joey')">Joey</button>
+      <button class="role-btn" id="roleCarmen" onclick="setRole('carmen')">Carmen</button>
+    </div>
   </header>
 
   <div class="container">
@@ -244,7 +269,6 @@
     <div class="calendar-grid" id="calendarGrid"></div>
   </div>
 
-  <!-- Bottom Floating Action Bar for batch edits -->
   <div class="action-bar" id="actionBar">
     <div class="action-btns">
       <button class="btn-action yes" onclick="batchUpdate('YES')">✓ Home (<span id="selectedCountYes">0</span>)</button>
@@ -252,7 +276,6 @@
     </div>
   </div>
 
-  <!-- Modal for optional Remarks on batch selection -->
   <div class="modal" id="remarkModal">
     <div class="modal-content">
       <h3 style="font-size: 1.1rem; font-weight: 800;" id="modalTitle">Set Remarks</h3>
@@ -264,14 +287,17 @@
   <script>
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzibHJyOQpLgOyV3RNT-miBNyPH-5cPOystW1oA3NXcusHncWuYOErEfIPpmlCUFsT9AQ/exec";
 
-    let monthOffset = 0; // Starts directly at current month (0)
+    let monthOffset = 0;
     let dbData = {};
     let selectedDates = new Set();
     let pendingStatus = '';
+    let currentUser = 'joey';
 
     const now = new Date();
     let currentYear = now.getFullYear();
     let currentMonth = now.getMonth();
+
+    renderCalendar();
 
     async function fetchData() {
       try {
@@ -281,6 +307,12 @@
       } catch (e) {
         console.error("Error fetching data:", e);
       }
+    }
+
+    function setRole(role) {
+      currentUser = role;
+      document.getElementById('roleJoey').classList.toggle('active', role === 'joey');
+      document.getElementById('roleCarmen').classList.toggle('active', role === 'carmen');
     }
 
     function changeMonth(delta) {
@@ -343,30 +375,23 @@
           <div class="day-card ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}" onclick="toggleDateSelection('${dateStr}')">
             <div class="day-num">${day}</div>
             <div class="status-stack">
-              <div class="status-pill ${getBadgeClass(joeySt)}">
-                <span>J: ${getBadgeIcon(joeySt)}</span>
-                ${dayData.joeyRemarks ? '<span class="remark-dot"></span>' : ''}
-              </div>
-              <div class="status-pill ${getBadgeClass(carmenSt)}">
-                <span>C: ${getBadgeIcon(carmenSt)}</span>
-                ${dayData.carmenRemarks ? '<span class="remark-dot"></span>' : ''}
-              </div>
+              ${renderBadge('J', joeySt, dayData.joeyRemarks)}
+              ${renderBadge('C', carmenSt, dayData.carmenRemarks)}
             </div>
           </div>
         `;
       }
     }
 
-    function getBadgeClass(status) {
-      if (status === 'YES') return 'status-yes';
-      if (status === 'NO') return 'status-no';
-      return 'status-unset';
-    }
-
-    function getBadgeIcon(status) {
-      if (status === 'YES') return '✓';
-      if (status === 'NO') return '✕';
-      return '-';
+    function renderBadge(shortName, status, remarks) {
+      const dot = remarks ? '<span class="remark-dot"></span>' : '';
+      if (status === 'YES') {
+        return `<div class="status-circle status-yes" title="Home">${shortName}${dot}</div>`;
+      }
+      if (status === 'NO') {
+        return `<div class="status-circle status-no" title="Out">${shortName}${dot}</div>`;
+      }
+      return `<div class="status-circle status-unset">${shortName}</div>`;
     }
 
     function batchUpdate(status) {
@@ -375,7 +400,8 @@
         return;
       }
       pendingStatus = status;
-      document.getElementById('modalTitle').innerText = `Update ${selectedDates.size} day(s) to "${status === 'YES' ? 'Home' : 'Out'}"`;
+      const displayUser = currentUser === 'joey' ? 'Joey' : 'Carmen';
+      document.getElementById('modalTitle').innerText = `Update ${selectedDates.size} day(s) for ${displayUser} to "${status === 'YES' ? 'Home' : 'Out'}"`;
       document.getElementById('remarkInput').value = '';
       document.getElementById('remarkModal').classList.add('open');
     }
@@ -389,11 +415,15 @@
       saveBtn.innerText = "Saving...";
       saveBtn.disabled = true;
 
-      // Optimistic state updates across all selected dates
       datesArray.forEach(dateStr => {
         if (!dbData[dateStr]) dbData[dateStr] = {};
-        dbData[dateStr].joeyStatus = pendingStatus;
-        if (remarks) dbData[dateStr].joeyRemarks = remarks;
+        if (currentUser === 'joey') {
+          dbData[dateStr].joeyStatus = pendingStatus;
+          if (remarks) dbData[dateStr].joeyRemarks = remarks;
+        } else {
+          dbData[dateStr].carmenStatus = pendingStatus;
+          if (remarks) dbData[dateStr].carmenRemarks = remarks;
+        }
         dbData[dateStr].lastUpdated = nowIso;
       });
 
@@ -404,7 +434,7 @@
         mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({
-          user: 'joey',
+          user: currentUser,
           dates: datesArray,
           status: pendingStatus,
           remarks: remarks
