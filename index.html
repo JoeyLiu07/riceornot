@@ -155,11 +155,14 @@
       padding: 4px;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
       cursor: pointer;
       position: relative;
       aspect-ratio: 1 / 1.25;
       overflow: hidden;
+      gap: 3px;
     }
 
     .day-card.empty { background: transparent; border: none; cursor: default; }
@@ -177,9 +180,17 @@
       background: var(--primary-light);
     }
 
-    .day-num { font-size: 0.72rem; font-weight: 800; color: var(--text-muted); line-height: 1; }
+    .day-num { font-size: 0.75rem; font-weight: 800; color: var(--text-muted); line-height: 1; }
 
-    .status-stack { display: flex; gap: 2px; justify-content: center; margin-top: 2px; }
+    .day-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .status-stack { display: flex; gap: 3px; justify-content: center; align-items: center; }
     
     .status-circle {
       font-size: 0.6rem;
@@ -203,13 +214,14 @@
       color: var(--text);
       background: #F1F5F9;
       border-radius: 3px;
-      padding: 1px 2px;
-      margin-top: 2px;
+      padding: 1px 3px;
+      margin-top: 3px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       font-weight: 600;
       text-align: center;
+      max-width: 100%;
     }
 
     .action-bar {
@@ -594,7 +606,7 @@
         grid.innerHTML += `
           <div class="day-card ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}" onclick="handleDateClick('${dateStr}')">
             <div class="day-num">${day}</div>
-            <div>
+            <div class="day-content">
               <div class="status-stack">
                 ${renderBadge('J', joeySt)}
                 ${renderBadge('C', carmenSt)}
