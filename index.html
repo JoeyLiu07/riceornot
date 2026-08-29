@@ -154,7 +154,7 @@
 
     .status-yes { background-color: var(--green); }
     .status-no { background-color: var(--red); }
-    .status-unset { background-color: #E2E8F0; color: var(--text-muted); }
+    .status-unset { background-color: #CBD5E1; color: #475569; }
 
     .remarks-box {
       font-size: 0.6rem;
@@ -191,23 +191,25 @@
 
     .action-btns {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       width: 100%;
     }
 
     .btn-action {
       flex: 1;
-      padding: 10px;
+      padding: 10px 6px;
       border-radius: 10px;
       border: 1px solid var(--border);
       font-weight: 700;
-      font-size: 0.85rem;
+      font-size: 0.78rem;
       cursor: pointer;
+      text-align: center;
     }
 
     .btn-action.yes { background: #ECFDF5; color: var(--green); border-color: var(--green); }
     .btn-action.no { background: #FEF2F2; color: var(--red); border-color: var(--red); }
-    
+    .btn-action.reset { background: #F1F5F9; color: var(--text-muted); border-color: #CBD5E1; }
+
     .modal {
       display: none;
       position: fixed;
@@ -280,8 +282,9 @@
 
   <div class="action-bar" id="actionBar">
     <div class="action-btns">
-      <button class="btn-action yes" onclick="batchUpdate('YES')">✓ Home (<span id="selectedCountYes">0</span>)</button>
-      <button class="btn-action no" onclick="batchUpdate('NO')">✕ Out (<span id="selectedCountNo">0</span>)</button>
+      <button class="btn-action yes" onclick="batchUpdate('YES')">✓ Home (<span id="countYes">0</span>)</button>
+      <button class="btn-action no" onclick="batchUpdate('NO')">✕ Out (<span id="countNo">0</span>)</button>
+      <button class="btn-action reset" onclick="batchUpdate('TBC')">↺ Reset (<span id="countReset">0</span>)</button>
     </div>
   </div>
 
@@ -294,7 +297,7 @@
   </div>
 
   <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzc4nsL0LvWg43NuLmuX3lmjO3GA7Xgsv0mpNx-rKU7hg44l97zE_mrCD9T7bHNHaZOcQ/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzA8-0-t-PRKrfzqpnLTPnGV-wwno3qa7LrNswbznZhkFxURWabMAuwdVjxWA5UYwjGuQ/exec";
 
     let monthOffset = 0;
     let dbData = {};
@@ -310,10 +313,23 @@
     fetchData();
 
     async function fetchData() {
+      const cached = localStorage.getItem('rice_db_data');
+      if (cached) {
+        try {
+          dbData = JSON.parse(cached);
+          renderCalendar();
+        } catch (e) {}
+      }
+
       try {
         const response = await fetch(GOOGLE_SCRIPT_URL);
-        dbData = await response.json();
-        renderCalendar();
+        const freshData = await response.json();
+        
+        if (freshData && typeof freshData === 'object') {
+          dbData = freshData;
+          localStorage.setItem('rice_db_data', JSON.stringify(dbData));
+          renderCalendar();
+        }
       } catch (e) {
         console.error("Error fetching data:", e);
       }
@@ -345,8 +361,9 @@
 
     function updateActionBar() {
       const count = selectedDates.size;
-      document.getElementById('selectedCountYes').innerText = count;
-      document.getElementById('selectedCountNo').innerText = count;
+      document.getElementById('countYes').innerText = count;
+      document.getElementById('countNo').innerText = count;
+      document.getElementById('countReset').innerText = count;
     }
 
     function renderCalendar() {
@@ -407,7 +424,7 @@
       if (status === 'NO') {
         return `<div class="status-circle status-no" title="Out">${shortName}</div>`;
       }
-      return `<div class="status-circle status-unset">${shortName}</div>`;
+      return `<div class="status-circle status-unset" title="TBC">${shortName}</div>`;
     }
 
     function batchUpdate(status) {
@@ -417,7 +434,9 @@
       }
       pendingStatus = status;
       const displayUser = currentUser === 'joey' ? 'Joey' : 'Carmen';
-      document.getElementById('modalTitle').innerText = `Update ${selectedDates.size} day(s) for ${displayUser} to "${status === 'YES' ? 'Home' : 'Out'}"`;
+      const label = status === 'YES' ? 'Home' : (status === 'NO' ? 'Out' : 'Reset to TBC');
+      
+      document.getElementById('modalTitle').innerText = `Set ${selectedDates.size} day(s) for ${displayUser} to "${label}"`;
       document.getElementById('remarkInput').value = '';
       document.getElementById('remarkModal').classList.add('open');
     }
@@ -431,18 +450,23 @@
       saveBtn.innerText = "Saving...";
       saveBtn.disabled = true;
 
+      // Optimistic cache update
       datesArray.forEach(dateStr => {
         if (!dbData[dateStr]) dbData[dateStr] = {};
+        
+        const applyStatus = (pendingStatus === 'TBC') ? '' : pendingStatus;
+        
         if (currentUser === 'joey') {
-          dbData[dateStr].joeyStatus = pendingStatus;
-          if (remarks) dbData[dateStr].joeyRemarks = remarks;
+          dbData[dateStr].joeyStatus = applyStatus;
+          dbData[dateStr].joeyRemarks = applyStatus ? remarks : '';
         } else {
-          dbData[dateStr].carmenStatus = pendingStatus;
-          if (remarks) dbData[dateStr].carmenRemarks = remarks;
+          dbData[dateStr].carmenStatus = applyStatus;
+          dbData[dateStr].carmenRemarks = applyStatus ? remarks : '';
         }
         dbData[dateStr].lastUpdated = nowIso;
       });
 
+      localStorage.setItem('rice_db_data', JSON.stringify(dbData));
       renderCalendar();
 
       try {
