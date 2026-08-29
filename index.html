@@ -208,7 +208,7 @@
 
     .btn-action.yes { background: #ECFDF5; color: var(--green); border-color: var(--green); }
     .btn-action.no { background: #FEF2F2; color: var(--red); border-color: var(--red); }
-    .btn-action.reset { background: #F1F5F9; color: var(--text-muted); border-color: #CBD5E1; }
+    .btn-action.edit { background: #EEF2FF; color: var(--primary); border-color: var(--primary); }
 
     .modal {
       display: none;
@@ -232,6 +232,29 @@
       padding: 24px;
     }
 
+    .status-picker {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      margin-bottom: 12px;
+    }
+
+    .status-option {
+      flex: 1;
+      padding: 10px;
+      border-radius: 10px;
+      border: 2px solid var(--border);
+      background: var(--bg);
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .status-option.selected-yes { border-color: var(--green); background: #ECFDF5; color: var(--green); }
+    .status-option.selected-no { border-color: var(--red); background: #FEF2F2; color: var(--red); }
+    .status-option.selected-clear { border-color: var(--text-muted); background: #F1F5F9; color: var(--text-muted); }
+
     .remark-input {
       width: 100%;
       padding: 12px;
@@ -239,7 +262,6 @@
       border-radius: 12px;
       font-size: 16px;
       outline: none;
-      margin-top: 12px;
       margin-bottom: 16px;
     }
 
@@ -284,20 +306,30 @@
     <div class="action-btns">
       <button class="btn-action yes" onclick="batchUpdate('YES')">✓ Home (<span id="countYes">0</span>)</button>
       <button class="btn-action no" onclick="batchUpdate('NO')">✕ Out (<span id="countNo">0</span>)</button>
-      <button class="btn-action reset" onclick="batchUpdate('TBC')">↺ Reset (<span id="countReset">0</span>)</button>
+      <button class="btn-action edit" onclick="openEditModal()">✎ Edit Selected</button>
     </div>
   </div>
 
   <div class="modal" id="remarkModal">
     <div class="modal-content">
-      <h3 style="font-size: 1.1rem; font-weight: 800;" id="modalTitle">Set Remarks</h3>
-      <input type="text" class="remark-input" id="remarkInput" placeholder="Add optional remarks for selected dates...">
+      <h3 style="font-size: 1.1rem; font-weight: 800;" id="modalTitle">Edit Details</h3>
+      
+      <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-top: 12px;">STATUS:</div>
+      <div class="status-picker">
+        <button class="status-option" id="optYes" onclick="selectModalStatus('YES')">✓ Home</button>
+        <button class="status-option" id="optNo" onclick="selectModalStatus('NO')">✕ Out</button>
+        <button class="status-option" id="optClear" onclick="selectModalStatus('')">↺ Clear</button>
+      </div>
+
+      <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">REMARKS:</div>
+      <input type="text" class="remark-input" id="remarkInput" placeholder="Add or edit remarks...">
+      
       <button class="btn-save" id="saveBtn" onclick="confirmBatchSave()">Save Updates</button>
     </div>
   </div>
 
   <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzA8-0-t-PRKrfzqpnLTPnGV-wwno3qa7LrNswbznZhkFxURWabMAuwdVjxWA5UYwjGuQ/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysgCpG_KTvZxYSaBrtOo2Fo8ueVH627UFXLW6YfaD2FkdzPiQRZFSIXcR3dbzGbWTD9A/exec";
 
     let monthOffset = 0;
     let dbData = {};
@@ -339,6 +371,7 @@
       currentUser = role;
       document.getElementById('roleJoey').classList.toggle('active', role === 'joey');
       document.getElementById('roleCarmen').classList.toggle('active', role === 'carmen');
+      renderCalendar();
     }
 
     function changeMonth(delta) {
@@ -363,7 +396,6 @@
       const count = selectedDates.size;
       document.getElementById('countYes').innerText = count;
       document.getElementById('countNo').innerText = count;
-      document.getElementById('countReset').innerText = count;
     }
 
     function renderCalendar() {
@@ -427,17 +459,48 @@
       return `<div class="status-circle status-unset" title="TBC">${shortName}</div>`;
     }
 
+    function selectModalStatus(status) {
+      pendingStatus = status;
+      document.getElementById('optYes').className = 'status-option' + (status === 'YES' ? ' selected-yes' : '');
+      document.getElementById('optNo').className = 'status-option' + (status === 'NO' ? ' selected-no' : '');
+      document.getElementById('optClear').className = 'status-option' + (status === '' ? ' selected-clear' : '');
+    }
+
     function batchUpdate(status) {
       if (selectedDates.size === 0) {
         alert("Please tap one or more days first!");
         return;
       }
-      pendingStatus = status;
+      selectModalStatus(status);
+      openModal();
+    }
+
+    function openEditModal() {
+      if (selectedDates.size === 0) {
+        alert("Please tap one or more days first!");
+        return;
+      }
+
+      // Pre-fill existing data if 1 date is selected
+      if (selectedDates.size === 1) {
+        const singleDate = Array.from(selectedDates)[0];
+        const dayData = dbData[singleDate] || {};
+        const currentSt = currentUser === 'joey' ? (dayData.joeyStatus || '') : (dayData.carmenStatus || '');
+        const currentRem = currentUser === 'joey' ? (dayData.joeyRemarks || '') : (dayData.carmenRemarks || '');
+
+        selectModalStatus(currentSt);
+        document.getElementById('remarkInput').value = currentRem;
+      } else {
+        selectModalStatus('');
+        document.getElementById('remarkInput').value = '';
+      }
+
+      openModal();
+    }
+
+    function openModal() {
       const displayUser = currentUser === 'joey' ? 'Joey' : 'Carmen';
-      const label = status === 'YES' ? 'Home' : (status === 'NO' ? 'Out' : 'Reset to TBC');
-      
-      document.getElementById('modalTitle').innerText = `Set ${selectedDates.size} day(s) for ${displayUser} to "${label}"`;
-      document.getElementById('remarkInput').value = '';
+      document.getElementById('modalTitle').innerText = `Edit ${selectedDates.size} day(s) for ${displayUser}`;
       document.getElementById('remarkModal').classList.add('open');
     }
 
@@ -454,14 +517,12 @@
       datesArray.forEach(dateStr => {
         if (!dbData[dateStr]) dbData[dateStr] = {};
         
-        const applyStatus = (pendingStatus === 'TBC') ? '' : pendingStatus;
-        
         if (currentUser === 'joey') {
-          dbData[dateStr].joeyStatus = applyStatus;
-          dbData[dateStr].joeyRemarks = applyStatus ? remarks : '';
+          dbData[dateStr].joeyStatus = pendingStatus;
+          dbData[dateStr].joeyRemarks = remarks;
         } else {
-          dbData[dateStr].carmenStatus = applyStatus;
-          dbData[dateStr].carmenRemarks = applyStatus ? remarks : '';
+          dbData[dateStr].carmenStatus = pendingStatus;
+          dbData[dateStr].carmenRemarks = remarks;
         }
         dbData[dateStr].lastUpdated = nowIso;
       });
