@@ -15,13 +15,14 @@
       --primary-light: #EEF2FF;
       --green: #10B981;
       --red: #EF4444;
-      --orange: #F97316;
+      --today-blue: #0284C7;
+      --today-bg: #F0F9FF;
       --border: #E2E8F0;
       --radius: 16px;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-    body { background-color: var(--bg); color: var(--text); padding-bottom: 90px; }
+    body { background-color: var(--bg); color: var(--text); padding-bottom: 95px; }
 
     header {
       background: var(--card-bg);
@@ -63,27 +64,42 @@
       color: white;
     }
 
-    /* User Reminder Banner */
+    /* User Banner & Mode Bar */
     .user-banner {
       background: #EEF2FF;
       border-bottom: 1px solid #C7D2FE;
       padding: 8px 16px;
-      text-align: center;
       font-size: 0.82rem;
       font-weight: 700;
       color: #3730A3;
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 6px;
+      justify-content: space-between;
     }
 
-    .user-banner span {
+    .user-banner span.user-tag {
       background: #4F46E5;
       color: white;
       padding: 2px 8px;
       border-radius: 10px;
       font-weight: 800;
+    }
+
+    .btn-mode {
+      background: white;
+      border: 1px solid #C7D2FE;
+      color: var(--primary);
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-mode.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
     }
 
     .container { max-width: 500px; margin: 0 auto; padding: 12px; }
@@ -150,11 +166,11 @@
     .day-card.empty { background: transparent; border: none; cursor: default; }
     
     .day-card.today { 
-      border: 2px solid var(--orange); 
-      background: #FFF7ED;
+      border: 2px solid var(--today-blue); 
+      background: var(--today-bg);
     }
     .day-card.today .day-num {
-      color: var(--orange);
+      color: var(--today-blue);
     }
     
     .day-card.selected {
@@ -259,6 +275,28 @@
       padding: 24px;
     }
 
+    .detail-row {
+      background: #F8FAFC;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin-top: 8px;
+    }
+
+    .detail-user { font-weight: 800; font-size: 0.82rem; color: var(--text-muted); margin-bottom: 2px; }
+    .detail-val { font-weight: 700; font-size: 0.95rem; }
+
+    .last-updated-badge {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      background: #F1F5F9;
+      padding: 4px 8px;
+      border-radius: 6px;
+      margin-top: 8px;
+      display: inline-block;
+      font-weight: 600;
+    }
+
     .status-picker {
       display: flex;
       gap: 8px;
@@ -304,11 +342,17 @@
       cursor: pointer;
     }
 
-    @media (max-width: 360px) {
-      .day-card { aspect-ratio: 1 / 1.35; padding: 2px; }
-      .status-circle { width: 15px; height: 15px; font-size: 0.55rem; }
-      .day-num { font-size: 0.65rem; }
-      .remarks-box { font-size: 0.5rem; }
+    .btn-edit-direct {
+      width: 100%;
+      background: var(--primary-light);
+      color: var(--primary);
+      border: 1px solid var(--primary);
+      padding: 12px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      margin-top: 12px;
     }
   </style>
 </head>
@@ -322,9 +366,9 @@
     </div>
   </header>
 
-  <!-- User Reminder Banner -->
   <div class="user-banner">
-    Editing as: <span id="bannerUser">Joey</span>
+    <div>Editing as: <span class="user-tag" id="bannerUser">Joey</span></div>
+    <button class="btn-mode" id="bulkToggleBtn" onclick="toggleBulkMode()">Select Multiple</button>
   </div>
 
   <div class="container">
@@ -341,7 +385,7 @@
     <div class="calendar-grid" id="calendarGrid"></div>
   </div>
 
-  <div class="action-bar" id="actionBar">
+  <div class="action-bar" id="actionBar" style="display: none;">
     <div class="action-btns">
       <button class="btn-action yes" onclick="batchUpdate('YES')">✓ Home (<span id="countYes">0</span>)</button>
       <button class="btn-action no" onclick="batchUpdate('NO')">✕ Out (<span id="countNo">0</span>)</button>
@@ -349,9 +393,30 @@
     </div>
   </div>
 
+  <div class="modal" id="detailModal">
+    <div class="modal-content">
+      <h3 style="font-size: 1.1rem; font-weight: 800;" id="detailTitle">Date Details</h3>
+      
+      <div class="detail-row">
+        <div class="detail-user">JOEY</div>
+        <div class="detail-val" id="detailJoey">--</div>
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-user">CARMEN</div>
+        <div class="detail-val" id="detailCarmen">--</div>
+      </div>
+
+      <div id="detailLastUpdated"></div>
+
+      <button class="btn-edit-direct" onclick="editCurrentSingleDate()">✎ Edit My Entry</button>
+    </div>
+  </div>
+
   <div class="modal" id="remarkModal">
     <div class="modal-content">
       <h3 style="font-size: 1.1rem; font-weight: 800;" id="modalTitle">Edit Details</h3>
+      <div id="lastUpdatedBox"></div>
       
       <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-top: 12px;">STATUS:</div>
       <div class="status-picker">
@@ -375,6 +440,8 @@
     let selectedDates = new Set();
     let pendingStatus = '';
     let currentUser = 'joey';
+    let isBulkMode = false;
+    let activeSingleDate = null;
 
     const now = new Date();
     let currentYear = now.getFullYear();
@@ -410,27 +477,75 @@
       currentUser = role;
       document.getElementById('roleJoey').classList.toggle('active', role === 'joey');
       document.getElementById('roleCarmen').classList.toggle('active', role === 'carmen');
-      
-      // Update reminder banner text
       document.getElementById('bannerUser').innerText = role === 'joey' ? 'Joey' : 'Carmen';
+      renderCalendar();
+    }
+
+    function toggleBulkMode() {
+      isBulkMode = !isBulkMode;
+      selectedDates.clear();
+      updateActionBar();
+      
+      const btn = document.getElementById('bulkToggleBtn');
+      btn.classList.toggle('active', isBulkMode);
+      btn.innerText = isBulkMode ? 'Done Selecting' : 'Select Multiple';
+      document.getElementById('actionBar').style.display = isBulkMode ? 'flex' : 'none';
       
       renderCalendar();
+    }
+
+    function handleDateClick(dateStr) {
+      if (isBulkMode) {
+        if (selectedDates.has(dateStr)) {
+          selectedDates.delete(dateStr);
+        } else {
+          selectedDates.add(dateStr);
+        }
+        updateActionBar();
+        renderCalendar();
+      } else {
+        openDayDetail(dateStr);
+      }
+    }
+
+    function openDayDetail(dateStr) {
+      activeSingleDate = dateStr;
+      const dayData = dbData[dateStr] || {};
+      
+      const formatStatus = (st, rem) => {
+        let text = st === 'YES' ? '✓ Home' : (st === 'NO' ? '✕ Out' : 'TBC');
+        if (rem) text += ` — "${rem}"`;
+        return text;
+      };
+
+      document.getElementById('detailTitle').innerText = dateStr;
+      document.getElementById('detailJoey').innerText = formatStatus(dayData.joeyStatus, dayData.joeyRemarks);
+      document.getElementById('detailCarmen').innerText = formatStatus(dayData.carmenStatus, dayData.carmenRemarks);
+
+      const lastUpdatedBox = document.getElementById('detailLastUpdated');
+      if (dayData.lastUpdated) {
+        const formattedTime = new Date(dayData.lastUpdated).toLocaleString('en-US', {
+          month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+        lastUpdatedBox.innerHTML = `<span class="last-updated-badge">⏱ Last updated: ${formattedTime}</span>`;
+      } else {
+        lastUpdatedBox.innerHTML = '';
+      }
+
+      document.getElementById('detailModal').classList.add('open');
+    }
+
+    function editCurrentSingleDate() {
+      closeDetailModal();
+      selectedDates.clear();
+      selectedDates.add(activeSingleDate);
+      openEditModal();
     }
 
     function changeMonth(delta) {
       if (monthOffset + delta < 0 || monthOffset + delta > 2) return;
       monthOffset += delta;
       selectedDates.clear();
-      updateActionBar();
-      renderCalendar();
-    }
-
-    function toggleDateSelection(dateStr) {
-      if (selectedDates.has(dateStr)) {
-        selectedDates.delete(dateStr);
-      } else {
-        selectedDates.add(dateStr);
-      }
       updateActionBar();
       renderCalendar();
     }
@@ -478,7 +593,7 @@
         if (dayData.carmenRemarks) remarksText += `C:${dayData.carmenRemarks}`;
 
         grid.innerHTML += `
-          <div class="day-card ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}" onclick="toggleDateSelection('${dateStr}')">
+          <div class="day-card ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}" onclick="handleDateClick('${dateStr}')">
             <div class="day-num">${day}</div>
             <div>
               <div class="status-stack">
@@ -493,12 +608,8 @@
     }
 
     function renderBadge(shortName, status) {
-      if (status === 'YES') {
-        return `<div class="status-circle status-yes" title="Home">${shortName}</div>`;
-      }
-      if (status === 'NO') {
-        return `<div class="status-circle status-no" title="Out">${shortName}</div>`;
-      }
+      if (status === 'YES') return `<div class="status-circle status-yes" title="Home">${shortName}</div>`;
+      if (status === 'NO') return `<div class="status-circle status-no" title="Out">${shortName}</div>`;
       return `<div class="status-circle status-unset" title="TBC">${shortName}</div>`;
     }
 
@@ -511,7 +622,7 @@
 
     function batchUpdate(status) {
       if (selectedDates.size === 0) {
-        alert("Please tap one or more days first!");
+        alert("Please select one or more days first!");
         return;
       }
       selectModalStatus(status);
@@ -520,9 +631,11 @@
 
     function openEditModal() {
       if (selectedDates.size === 0) {
-        alert("Please tap one or more days first!");
+        alert("Please select one or more days first!");
         return;
       }
+
+      const lastUpdatedBox = document.getElementById('lastUpdatedBox');
 
       if (selectedDates.size === 1) {
         const singleDate = Array.from(selectedDates)[0];
@@ -532,82 +645,7 @@
 
         selectModalStatus(currentSt);
         document.getElementById('remarkInput').value = currentRem;
-      } else {
-        selectModalStatus('');
-        document.getElementById('remarkInput').value = '';
-      }
 
-      openModal();
-    }
-
-    function openModal() {
-      const displayUser = currentUser === 'joey' ? 'Joey' : 'Carmen';
-      document.getElementById('modalTitle').innerText = `Edit ${selectedDates.size} day(s) for ${displayUser}`;
-      document.getElementById('remarkModal').classList.add('open');
-    }
-
-    async function confirmBatchSave() {
-      const remarks = document.getElementById('remarkInput').value;
-      const saveBtn = document.getElementById('saveBtn');
-      const datesArray = Array.from(selectedDates);
-      const nowIso = new Date().toISOString();
-
-      saveBtn.innerText = "Saving...";
-      saveBtn.disabled = true;
-
-      // Optimistic cache update
-      datesArray.forEach(dateStr => {
-        if (!dbData[dateStr]) dbData[dateStr] = {};
-        
-        if (currentUser === 'joey') {
-          dbData[dateStr].joeyStatus = pendingStatus;
-          dbData[dateStr].joeyRemarks = remarks;
-        } else {
-          dbData[dateStr].carmenStatus = pendingStatus;
-          dbData[dateStr].carmenRemarks = remarks;
-        }
-        dbData[dateStr].lastUpdated = nowIso;
-      });
-
-      localStorage.setItem('rice_db_data', JSON.stringify(dbData));
-      renderCalendar();
-
-      try {
-        const payload = JSON.stringify({
-          user: currentUser,
-          dates: datesArray,
-          status: pendingStatus,
-          remarks: remarks
-        });
-
-        await fetch(GOOGLE_SCRIPT_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: payload
-        });
-
-        setTimeout(fetchData, 1500);
-      } catch (err) {
-        console.error("Save error:", err);
-      }
-
-      saveBtn.innerText = "Save Updates";
-      saveBtn.disabled = false;
-      
-      selectedDates.clear();
-      updateActionBar();
-      closeModal();
-      renderCalendar();
-    }
-
-    function closeModal() {
-      document.getElementById('remarkModal').classList.remove('open');
-    }
-
-    document.getElementById('remarkModal').addEventListener('click', (e) => {
-      if (e.target === document.getElementById('remarkModal')) closeModal();
-    });
-  </script>
-</body>
-</html>
+        if (dayData.lastUpdated) {
+          const formattedTime = new Date(dayData.lastUpdated).toLocaleString('en-US', {
+            month: 'short', day: 'numeric', hour:
