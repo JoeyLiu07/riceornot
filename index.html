@@ -64,7 +64,6 @@
       color: white;
     }
 
-    /* User Banner & Mode Bar */
     .user-banner {
       background: #EEF2FF;
       border-bottom: 1px solid #C7D2FE;
@@ -433,7 +432,7 @@
   </div>
 
   <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysgCpG_KTvZxYSaBrtOo2Fo8ueVH627UFXLW6YfaD2FkdzPiQRZFSIXcR3dbzGbWTD9A/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhjpwKH7yZ2mlcJj3nvZo1lhQd726mcofxCTh276DLNNIHsFdbRjPMOOvveg_G4spO-Q/exec";
 
     let monthOffset = 0;
     let dbData = {};
@@ -648,4 +647,96 @@
 
         if (dayData.lastUpdated) {
           const formattedTime = new Date(dayData.lastUpdated).toLocaleString('en-US', {
-            month: 'short', day: 'numeric', hour:
+            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+          });
+          lastUpdatedBox.innerHTML = `<span class="last-updated-badge">⏱ Last updated: ${formattedTime}</span>`;
+        } else {
+          lastUpdatedBox.innerHTML = '';
+        }
+      } else {
+        selectModalStatus('');
+        document.getElementById('remarkInput').value = '';
+        lastUpdatedBox.innerHTML = '';
+      }
+
+      openModal();
+    }
+
+    function openModal() {
+      const displayUser = currentUser === 'joey' ? 'Joey' : 'Carmen';
+      document.getElementById('modalTitle').innerText = `Edit ${selectedDates.size} day(s) for ${displayUser}`;
+      document.getElementById('remarkModal').classList.add('open');
+    }
+
+    async function confirmBatchSave() {
+      const remarks = document.getElementById('remarkInput').value;
+      const saveBtn = document.getElementById('saveBtn');
+      const datesArray = Array.from(selectedDates);
+      const nowIso = new Date().toISOString();
+
+      saveBtn.innerText = "Saving...";
+      saveBtn.disabled = true;
+
+      datesArray.forEach(dateStr => {
+        if (!dbData[dateStr]) dbData[dateStr] = {};
+        
+        if (currentUser === 'joey') {
+          dbData[dateStr].joeyStatus = pendingStatus;
+          dbData[dateStr].joeyRemarks = remarks;
+        } else {
+          dbData[dateStr].carmenStatus = pendingStatus;
+          dbData[dateStr].carmenRemarks = remarks;
+        }
+        dbData[dateStr].lastUpdated = nowIso;
+      });
+
+      localStorage.setItem('rice_db_data', JSON.stringify(dbData));
+      renderCalendar();
+
+      try {
+        const payload = JSON.stringify({
+          user: currentUser,
+          dates: datesArray,
+          status: pendingStatus,
+          remarks: remarks
+        });
+
+        await fetch(GOOGLE_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: payload
+        });
+
+        setTimeout(fetchData, 1500);
+      } catch (err) {
+        console.error("Save error:", err);
+      }
+
+      saveBtn.innerText = "Save Updates";
+      saveBtn.disabled = false;
+      
+      selectedDates.clear();
+      updateActionBar();
+      closeModal();
+      renderCalendar();
+    }
+
+    function closeModal() {
+      document.getElementById('remarkModal').classList.remove('open');
+    }
+
+    function closeDetailModal() {
+      document.getElementById('detailModal').classList.remove('open');
+    }
+
+    document.getElementById('remarkModal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('remarkModal')) closeModal();
+    });
+
+    document.getElementById('detailModal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('detailModal')) closeDetailModal();
+    });
+  </script>
+</body>
+</html>
