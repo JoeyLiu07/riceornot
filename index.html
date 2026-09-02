@@ -40,7 +40,6 @@
 
     .brand { font-weight: 800; font-size: 1.1rem; color: var(--primary); display: flex; align-items: center; gap: 6px; }
 
-    /* Equal Width & Unselected Grayed-out Role Toggle */
     .banner-role-toggle {
       display: inline-flex;
       background: #E2E8F0;
@@ -139,7 +138,6 @@
 
     .container { max-width: 500px; margin: 0 auto; padding: 12px; }
 
-    /* Compact Month Header Box */
     .calendar-header {
       display: flex;
       justify-content: space-between;
@@ -182,7 +180,6 @@
 
     .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
 
-    /* Restored 1 / 1.5 Aspect Ratio */
     .day-card {
       background: var(--card-bg);
       border: 1px solid var(--border);
@@ -201,38 +198,49 @@
     .day-card.today .day-num { color: var(--today-blue); }
     .day-card.selected { border: 2px solid var(--primary); background: var(--primary-light); }
 
+    /* Absolute Top Left Date Number */
     .day-num { 
       font-size: 0.7rem; 
       font-weight: 800; 
       color: var(--text-muted); 
       line-height: 1; 
-      align-self: flex-start;
-      margin-top: 1px;
-      margin-left: 1px;
+      position: absolute;
+      top: 3px;
+      left: 4px;
+      z-index: 2;
     }
 
+    /* Centered Inner Container */
     .day-content {
       flex: 1;
       display: flex;
       flex-direction: column;
-      justify-content: flex-start;
+      justify-content: center;
       align-items: center;
       width: 100%;
-      margin-top: 1px;
+      padding-top: 10px; /* Offset space for top-left day-num */
     }
 
-    .status-stack { display: flex; gap: 2px; justify-content: center; align-items: center; margin-bottom: 1px; }
+    .status-stack { 
+      display: flex; 
+      gap: 3px; 
+      justify-content: center; 
+      align-items: center; 
+      height: 18px;
+      margin-bottom: 2px;
+    }
     
     .status-circle {
       font-size: 0.55rem;
       font-weight: 800;
-      width: 15px;
-      height: 15px;
+      width: 16px;
+      height: 16px;
       border-radius: 50%;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       color: white;
+      flex-shrink: 0;
     }
 
     .status-yes { background-color: var(--green); }
@@ -242,17 +250,16 @@
     .remarks-container {
       display: flex;
       flex-direction: column;
-      gap: 1px;
+      gap: 2px;
       align-items: center;
-      justify-content: flex-start;
+      justify-content: center;
       width: 100%;
-      margin-top: 1px;
       overflow: hidden;
     }
 
     .remarks-box {
       font-size: 0.5rem;
-      line-height: 1;
+      line-height: 1.1;
       color: var(--text);
       background: #F1F5F9;
       border-radius: 2px;
@@ -386,7 +393,6 @@
       cursor: pointer;
     }
 
-    /* Smaller Add Coupon Button */
     .btn-add-coupon {
       width: auto;
       display: inline-flex;
@@ -556,10 +562,8 @@
   </div>
 
   <div id="calendarView" class="tab-view active">
-    <!-- Coupon Alert Banner -->
     <div id="couponAlertBanner" class="coupon-alert-banner" style="display: none;"></div>
 
-    <!-- User Banner containing Equal-Width Joey / Carmen Toggle -->
     <div class="user-banner">
       <div>
         Editing as:
@@ -588,7 +592,6 @@
 
   <div id="couponsView" class="tab-view">
     <div class="container">
-      <!-- Compact Add Coupon Button -->
       <div style="display: flex; justify-content: flex-end;">
         <button class="btn-add-coupon" onclick="openAddCouponModal()">+ Add Coupon</button>
       </div>
