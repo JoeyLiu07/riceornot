@@ -496,14 +496,14 @@
       background: linear-gradient(135deg, #4F46E5, #3730A3);
       color: white;
       border-radius: var(--radius);
-      padding: 20px;
+      padding: 16px;
       text-align: center;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
       box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
     }
 
     .bill-summary-title {
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -511,41 +511,70 @@
     }
 
     .bill-cycle-dates {
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       font-weight: 600;
       background: rgba(255, 255, 255, 0.15);
       display: inline-block;
-      padding: 3px 10px;
-      border-radius: 12px;
-      margin-top: 6px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-top: 4px;
     }
 
-    .bill-summary-amount { font-size: 2.2rem; font-weight: 800; margin-top: 4px; }
+    .bill-summary-amount { font-size: 2rem; font-weight: 800; margin-top: 2px; }
 
     .bill-group-header {
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       font-weight: 800;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      margin: 16px 0 8px 4px;
+      margin: 12px 0 6px 4px;
     }
 
+    /* Compact Item Cards */
     .bill-item-card {
       background: var(--card-bg);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px 16px;
-      margin-bottom: 8px;
+      border-radius: 10px;
+      padding: 8px 12px;
+      margin-bottom: 4px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 12px;
     }
 
-    .bill-item-desc { font-weight: 800; font-size: 0.95rem; color: var(--text); }
-    .bill-item-meta { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
-    .bill-item-date { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); }
-    .bill-item-amount { font-weight: 800; font-size: 1rem; color: var(--primary); }
+    .bill-item-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .bill-item-desc { 
+      font-weight: 700; 
+      font-size: 0.88rem; 
+      color: var(--text); 
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .bill-item-date { 
+      font-size: 0.75rem; 
+      font-weight: 600; 
+      color: var(--text-muted); 
+      flex-shrink: 0;
+    }
+
+    .bill-item-amount { 
+      font-weight: 800; 
+      font-size: 0.92rem; 
+      color: var(--primary); 
+      flex-shrink: 0;
+    }
+
     .bill-item-amount.deduct { color: var(--red); }
   </style>
 </head>
@@ -875,11 +904,9 @@
 
         return `
           <div class="bill-item-card">
-            <div>
-              <div class="bill-item-desc">${item.description || 'Expense'}</div>
-              <div class="bill-item-meta">
-                <span class="bill-item-date">${cleanDate}</span>
-              </div>
+            <div class="bill-item-info">
+              <span class="bill-item-date">${cleanDate}</span>
+              <span class="bill-item-desc">${item.description || 'Expense'}</span>
             </div>
             <div class="bill-item-amount ${isDeduction ? 'deduct' : ''}">
               ${isDeduction ? '-' : ''}$${formattedAmt}
