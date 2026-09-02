@@ -15,6 +15,7 @@
       --primary-light: #EEF2FF;
       --green: #10B981;
       --red: #EF4444;
+      --orange: #F59E0B;
       --today-blue: #0284C7;
       --today-bg: #F0F9FF;
       --border: #E2E8F0;
@@ -63,6 +64,35 @@
       background: var(--primary);
       color: white;
     }
+
+    /* Tab Bar Navigation */
+    .nav-tabs {
+      display: flex;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 4px 16px;
+      gap: 8px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      background: transparent;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .tab-view { display: none; }
+    .tab-view.active { display: block; }
 
     .user-banner {
       background: #EEF2FF;
@@ -344,14 +374,14 @@
     .status-option.selected-no { border-color: var(--red); background: #FEF2F2; color: var(--red); }
     .status-option.selected-clear { border-color: var(--text-muted); background: #F1F5F9; color: var(--text-muted); }
 
-    .remark-input {
+    .remark-input, .coupon-input {
       width: 100%;
       padding: 12px;
       border: 1px solid var(--border);
       border-radius: 12px;
       font-size: 16px;
       outline: none;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }
 
     .btn-save {
@@ -378,6 +408,44 @@
       cursor: pointer;
       margin-top: 12px;
     }
+
+    /* Coupon Styles */
+    .coupon-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .coupon-info { display: flex; flex-direction: column; gap: 2px; }
+    .coupon-title { font-weight: 800; font-size: 0.95rem; color: var(--text); }
+    .coupon-expiry { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); }
+    
+    .badge-exp {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 6px;
+      display: inline-block;
+      margin-top: 2px;
+    }
+    .badge-warning { background: #FEF3C7; color: var(--orange); }
+    .badge-danger { background: #FEF2F2; color: var(--red); }
+
+    .btn-delete {
+      background: #FEF2F2;
+      border: 1px solid #FCA5A5;
+      color: var(--red);
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -390,23 +458,37 @@
     </div>
   </header>
 
-  <div class="user-banner">
-    <div>Editing as: <span class="user-tag" id="bannerUser">Joey</span></div>
-    <button class="btn-mode" id="bulkToggleBtn" onclick="toggleBulkMode()">Select Multiple</button>
+  <div class="nav-tabs">
+    <button class="tab-btn active" id="tabBtnCalendar" onclick="switchTab('calendar')">📅 Calendar</button>
+    <button class="tab-btn" id="tabBtnCoupons" onclick="switchTab('coupons')">🎟️ Coupons</button>
   </div>
 
-  <div class="container">
-    <div class="calendar-header">
-      <button class="nav-btn" id="prevBtn" onclick="changeMonth(-1)">‹</button>
-      <div class="month-title" id="monthTitle">--</div>
-      <button class="nav-btn" id="nextBtn" onclick="changeMonth(1)">›</button>
+  <div id="calendarView" class="tab-view active">
+    <div class="user-banner">
+      <div>Editing as: <span class="user-tag" id="bannerUser">Joey</span></div>
+      <button class="btn-mode" id="bulkToggleBtn" onclick="toggleBulkMode()">Select Multiple</button>
     </div>
 
-    <div class="weekdays">
-      <div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div>
-    </div>
+    <div class="container">
+      <div class="calendar-header">
+        <button class="nav-btn" id="prevBtn" onclick="changeMonth(-1)">‹</button>
+        <div class="month-title" id="monthTitle">--</div>
+        <button class="nav-btn" id="nextBtn" onclick="changeMonth(1)">›</button>
+      </div>
 
-    <div class="calendar-grid" id="calendarGrid"></div>
+      <div class="weekdays">
+        <div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div>
+      </div>
+
+      <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+  </div>
+
+  <div id="couponsView" class="tab-view">
+    <div class="container">
+      <button class="btn-save" style="margin-bottom: 14px;" onclick="openAddCouponModal()">+ Add New Coupon</button>
+      <div id="couponsList"></div>
+    </div>
   </div>
 
   <div class="action-bar" id="actionBar" style="display: none;">
@@ -456,11 +538,26 @@
     </div>
   </div>
 
+  <div class="modal" id="couponModal">
+    <div class="modal-content">
+      <h3 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 12px;">Add New Coupon</h3>
+      
+      <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">COUPON NAME / STORE:</div>
+      <input type="text" class="coupon-input" id="couponNameInput" placeholder="e.g., Wellcome $50 Voucher">
+
+      <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">EXPIRY DATE:</div>
+      <input type="date" class="coupon-input" id="couponExpiryInput">
+
+      <button class="btn-save" onclick="saveCoupon()">Save Coupon</button>
+    </div>
+  </div>
+
   <script>
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhjpwKH7yZ2mlcJj3nvZo1lhQd726mcofxCTh276DLNNIHsFdbRjPMOOvveg_G4spO-Q/exec";
 
     let monthOffset = 0;
     let dbData = {};
+    let coupons = [];
     let selectedDates = new Set();
     let pendingStatus = '';
     let currentUser = 'joey';
@@ -473,6 +570,20 @@
 
     renderCalendar();
     fetchData();
+    loadCoupons();
+
+    function switchTab(tab) {
+      document.getElementById('tabBtnCalendar').classList.toggle('active', tab === 'calendar');
+      document.getElementById('tabBtnCoupons').classList.toggle('active', tab === 'coupons');
+      document.getElementById('calendarView').classList.toggle('active', tab === 'calendar');
+      document.getElementById('couponsView').classList.toggle('active', tab === 'coupons');
+
+      if (tab === 'coupons') {
+        document.getElementById('actionBar').style.display = 'none';
+      } else if (isBulkMode) {
+        document.getElementById('actionBar').style.display = 'flex';
+      }
+    }
 
     async function fetchData() {
       const cached = localStorage.getItem('rice_db_data');
@@ -757,12 +868,94 @@
       document.getElementById('detailModal').classList.remove('open');
     }
 
+    /* COUPONS FUNCTIONS */
+    function loadCoupons() {
+      const saved = localStorage.getItem('rice_coupons');
+      if (saved) {
+        try { coupons = JSON.parse(saved); } catch (e) {}
+      }
+      renderCoupons();
+    }
+
+    function saveCouponsToStorage() {
+      localStorage.setItem('rice_coupons', JSON.stringify(coupons));
+      renderCoupons();
+    }
+
+    function renderCoupons() {
+      const list = document.getElementById('couponsList');
+      if (coupons.length === 0) {
+        list.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 20px; font-weight: 600;">No coupons added yet!</div>`;
+        return;
+      }
+
+      // Sort by earliest expiry date
+      coupons.sort((a, b) => new Date(a.expiry) - new Date(b.expiry));
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      list.innerHTML = coupons.map((c, i) => {
+        const expDate = new Date(c.expiry);
+        const diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
+        
+        let badgeHtml = '';
+        if (diffDays < 0) {
+          badgeHtml = `<span class="badge-exp badge-danger">Expired</span>`;
+        } else if (diffDays <= 7) {
+          badgeHtml = `<span class="badge-exp badge-warning">Expires in ${diffDays} day(s)</span>`;
+        }
+
+        return `
+          <div class="coupon-card">
+            <div class="coupon-info">
+              <div class="coupon-title">${c.name}</div>
+              <div class="coupon-expiry">Expires: ${c.expiry}</div>
+              ${badgeHtml}
+            </div>
+            <button class="btn-delete" onclick="deleteCoupon(${i})">Used / Delete</button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openAddCouponModal() {
+      document.getElementById('couponNameInput').value = '';
+      document.getElementById('couponExpiryInput').value = '';
+      document.getElementById('couponModal').classList.add('open');
+    }
+
+    function saveCoupon() {
+      const name = document.getElementById('couponNameInput').value.trim();
+      const expiry = document.getElementById('couponExpiryInput').value;
+
+      if (!name || !expiry) {
+        alert("Please fill in both the coupon name and expiry date.");
+        return;
+      }
+
+      coupons.push({ name, expiry });
+      saveCouponsToStorage();
+      document.getElementById('couponModal').classList.remove('open');
+    }
+
+    function deleteCoupon(index) {
+      if (confirm("Mark this coupon as used or delete it?")) {
+        coupons.splice(index, 1);
+        saveCouponsToStorage();
+      }
+    }
+
     document.getElementById('remarkModal').addEventListener('click', (e) => {
       if (e.target === document.getElementById('remarkModal')) closeModal();
     });
 
     document.getElementById('detailModal').addEventListener('click', (e) => {
       if (e.target === document.getElementById('detailModal')) closeDetailModal();
+    });
+
+    document.getElementById('couponModal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('couponModal')) document.getElementById('couponModal').classList.remove('open');
     });
   </script>
 </body>
