@@ -603,7 +603,7 @@
   </div>
 
   <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxaPCxzFU0L7yxLudvVW1DcjMgIdWv0D8R5eSnCUeFkjrClHm0nORatZ-N5sRHk7huhDQ/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw0WO5GXBVJGIUqjkwdp0vTRijkxvkOqkawT6HIgan9alPuOyhsd2JyRAMlTMaTLfCTNA/exec";
 
     let monthOffset = 0;
     let dbData = {};
@@ -622,17 +622,22 @@
 
     function formatDateOnly(str) {
       if (!str) return '';
-      if (typeof str === 'string' && str.includes('T')) {
-        return str.split('T')[0];
+      const strVal = String(str).trim();
+      if (strVal.match(/^\d{4}-\d{1,2}-\d{1,2}/)) {
+        const parts = strVal.split('T')[0].split('-');
+        const y = parseInt(parts[0], 10);
+        const m = String(parseInt(parts[1], 10)).padStart(2, '0');
+        const day = String(parseInt(parts[2], 10)).padStart(2, '0');
+        return `${y}-${m}-${day}`;
       }
-      const d = new Date(str);
+      const d = new Date(strVal);
       if (!isNaN(d.getTime())) {
         const y = d.getFullYear();
         const m = String(d.getMonth() + 1).padStart(2, '0');
         const day = String(d.getDate()).padStart(2, '0');
         return `${y}-${m}-${day}`;
       }
-      return String(str);
+      return strVal;
     }
 
     function formatNumber1Dec(num) {
@@ -753,7 +758,6 @@
       const totalEl = document.getElementById('billTotalAmount');
       const cycleEl = document.getElementById('billCycleDates');
 
-      // Cycle Range Display
       const cleanStart = formatDateOnly(billCycle.start);
       const cleanEnd = formatDateOnly(billCycle.end);
 
@@ -769,12 +773,10 @@
         return;
       }
 
-      // Group items into 3 categories: Deductions, One-off, Recurring
       const deductionItems = billItems.filter(i => i.deduct);
       const oneOffItems = billItems.filter(i => !i.recurring && !i.deduct);
       const recurringItems = billItems.filter(i => i.recurring && !i.deduct);
 
-      // Sort chronologically within group
       const sortByDate = (a, b) => new Date(formatDateOnly(a.date)) - new Date(formatDateOnly(b.date));
       oneOffItems.sort(sortByDate);
       recurringItems.sort(sortByDate);
@@ -809,19 +811,16 @@
         `;
       };
 
-      // 1. One-off Expenses
       if (oneOffItems.length > 0) {
         html += `<div class="bill-group-header">One-off Expenses</div>`;
         html += oneOffItems.map(i => renderCard(i, false)).join('');
       }
 
-      // 2. Recurring Items
       if (recurringItems.length > 0) {
         html += `<div class="bill-group-header">Recurring Items</div>`;
         html += recurringItems.map(i => renderCard(i, false)).join('');
       }
 
-      // 3. Deductions Group (At the Bottom)
       if (deductionItems.length > 0) {
         html += `<div class="bill-group-header">Deductions</div>`;
         html += deductionItems.map(i => renderCard(i, true)).join('');
