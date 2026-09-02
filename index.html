@@ -481,6 +481,7 @@
     .bill-item-meta { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
     .bill-item-date { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); }
     .bill-item-amount { font-weight: 800; font-size: 1rem; color: var(--primary); }
+    .bill-item-amount.deduct { color: var(--red); }
   </style>
 </head>
 <body>
@@ -602,7 +603,7 @@
   </div>
 
   <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyQSEprWUTh26-TmcOiJbT1ZIF0-zg59Zvs4B8YEK7gYyC8T01BprgUoDH4rgw6v1lqkA/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxaPCxzFU0L7yxLudvVW1DcjMgIdWv0D8R5eSnCUeFkjrClHm0nORatZ-N5sRHk7huhDQ/exec";
 
     let monthOffset = 0;
     let dbData = {};
@@ -752,7 +753,7 @@
       const totalEl = document.getElementById('billTotalAmount');
       const cycleEl = document.getElementById('billCycleDates');
 
-      // 1. Cycle Range Display
+      // Cycle Range Display
       const cleanStart = formatDateOnly(billCycle.start);
       const cleanEnd = formatDateOnly(billCycle.end);
 
@@ -768,20 +769,28 @@
         return;
       }
 
-      // Group into One-off vs Recurring
-      const oneOffItems = billItems.filter(i => !i.recurring);
-      const recurringItems = billItems.filter(i => i.recurring);
+      // Group items into 3 categories: Deductions, One-off, Recurring
+      const deductionItems = billItems.filter(i => i.deduct);
+      const oneOffItems = billItems.filter(i => !i.recurring && !i.deduct);
+      const recurringItems = billItems.filter(i => i.recurring && !i.deduct);
 
       // Sort chronologically within group
-      oneOffItems.sort((a, b) => new Date(formatDateOnly(a.date)) - new Date(formatDateOnly(b.date)));
-      recurringItems.sort((a, b) => new Date(formatDateOnly(a.date)) - new Date(formatDateOnly(b.date)));
+      const sortByDate = (a, b) => new Date(formatDateOnly(a.date)) - new Date(formatDateOnly(b.date));
+      oneOffItems.sort(sortByDate);
+      recurringItems.sort(sortByDate);
+      deductionItems.sort(sortByDate);
 
       let total = 0;
       let html = '';
 
-      const renderCard = (item) => {
+      const renderCard = (item, isDeduction = false) => {
         const amt = Number(item.amount) || 0;
-        total += amt;
+        if (isDeduction) {
+          total -= amt;
+        } else {
+          total += amt;
+        }
+
         const formattedAmt = formatNumber1Dec(amt);
         const cleanDate = formatDateOnly(item.date);
 
@@ -793,21 +802,29 @@
                 <span class="bill-item-date">${cleanDate}</span>
               </div>
             </div>
-            <div class="bill-item-amount">$${formattedAmt}</div>
+            <div class="bill-item-amount ${isDeduction ? 'deduct' : ''}">
+              ${isDeduction ? '-' : ''}$${formattedAmt}
+            </div>
           </div>
         `;
       };
 
-      // 1. Render One-off Expenses Section
+      // 1. One-off Expenses
       if (oneOffItems.length > 0) {
         html += `<div class="bill-group-header">One-off Expenses</div>`;
-        html += oneOffItems.map(i => renderCard(i)).join('');
+        html += oneOffItems.map(i => renderCard(i, false)).join('');
       }
 
-      // 2. Render Recurring Items Section
+      // 2. Recurring Items
       if (recurringItems.length > 0) {
         html += `<div class="bill-group-header">Recurring Items</div>`;
-        html += recurringItems.map(i => renderCard(i)).join('');
+        html += recurringItems.map(i => renderCard(i, false)).join('');
+      }
+
+      // 3. Deductions Group (At the Bottom)
+      if (deductionItems.length > 0) {
+        html += `<div class="bill-group-header">Deductions</div>`;
+        html += deductionItems.map(i => renderCard(i, true)).join('');
       }
 
       list.innerHTML = html;
