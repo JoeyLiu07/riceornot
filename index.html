@@ -186,7 +186,7 @@
       flex-direction: column;
       cursor: pointer;
       position: relative;
-      aspect-ratio: 1 / 1.25;
+      aspect-ratio: 1 / 1.5; /* Made box longer vertically */
       overflow: hidden;
     }
 
@@ -209,12 +209,13 @@
       flex: 1;
       display: flex;
       flex-direction: column;
-      justify-content: center;
+      justify-content: flex-start;
       align-items: center;
       width: 100%;
+      margin-top: 2px;
     }
 
-    .status-stack { display: flex; gap: 3px; justify-content: center; align-items: center; }
+    .status-stack { display: flex; gap: 3px; justify-content: center; align-items: center; margin-bottom: 2px; }
     
     .status-circle {
       font-size: 0.6rem;
@@ -233,16 +234,18 @@
     .status-unset { background-color: #CBD5E1; color: #475569; }
 
     .remarks-container {
-      height: 14px;
       display: flex;
+      flex-direction: column;
+      gap: 2px;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       width: 100%;
-      margin-top: 3px;
+      margin-top: 2px;
+      overflow: hidden;
     }
 
     .remarks-box {
-      font-size: 0.55rem;
+      font-size: 0.52rem;
       line-height: 1.1;
       color: var(--text);
       background: #F1F5F9;
@@ -254,6 +257,7 @@
       font-weight: 600;
       text-align: center;
       max-width: 100%;
+      width: 100%;
     }
 
     .action-bar {
@@ -602,7 +606,7 @@
   </div>
 
   <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw7TgqVwS0y1_4eOT39wPnBMK-UhpZSSoT0ycc_XovV9D-FRgt86iM8Q1B6DyZVbdZMsA/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz4LYWuRGHctupeTD35Qg7R5I3ZBQQ8snX2vOTPSKpqrQJKgDK4CI4Q3KZOKg8DMvAD2g/exec";
 
     let monthOffset = 0;
     let dbData = {};
@@ -944,9 +948,16 @@
         const joeySt = dayData.joeyStatus || '';
         const carmenSt = dayData.carmenStatus || '';
 
-        let remarksText = '';
-        if (dayData.joeyRemarks) remarksText += `J:${dayData.joeyRemarks} `;
-        if (dayData.carmenRemarks) remarksText += `C:${dayData.carmenRemarks}`;
+        const joeyRem = (dayData.joeyRemarks || '').trim();
+        const carmenRem = (dayData.carmenRemarks || '').trim();
+
+        let remarksHtml = '';
+        if (joeyRem) {
+          remarksHtml += `<div class="remarks-box" title="J: ${joeyRem}">J:${joeyRem}</div>`;
+        }
+        if (carmenRem) {
+          remarksHtml += `<div class="remarks-box" title="C: ${carmenRem}">C:${carmenRem}</div>`;
+        }
 
         grid.innerHTML += `
           <div class="day-card ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}" onclick="handleDateClick('${dateStr}')">
@@ -957,7 +968,7 @@
                 ${renderBadge('C', carmenSt)}
               </div>
               <div class="remarks-container">
-                ${remarksText ? `<div class="remarks-box" title="${remarksText}">${remarksText}</div>` : ''}
+                ${remarksHtml}
               </div>
             </div>
           </div>
@@ -977,7 +988,6 @@
       document.getElementById('optNo').className = 'status-option' + (status === 'NO' ? ' selected-no' : '');
       document.getElementById('optClear').className = 'status-option' + (status === '' ? ' selected-clear' : '');
       
-      // Erase remarks text when Clear is selected
       if (status === '') {
         document.getElementById('remarkInput').value = '';
       }
@@ -1034,7 +1044,7 @@
     }
 
     async function confirmBatchSave() {
-      const remarks = document.getElementById('remarkInput').value;
+      const remarks = pendingStatus === '' ? '' : document.getElementById('remarkInput').value.trim();
       const saveBtn = document.getElementById('saveBtn');
       const datesArray = Array.from(selectedDates);
       const nowIso = new Date().toISOString();
@@ -1052,10 +1062,13 @@
           dbData[dateStr].carmenStatus = pendingStatus;
           dbData[dateStr].carmenRemarks = remarks;
         }
-        
-        // Remove locally if both entries become empty
-        if (!dbData[dateStr].joeyStatus && !dbData[dateStr].joeyRemarks && 
-            !dbData[dateStr].carmenStatus && !dbData[dateStr].carmenRemarks) {
+
+        const jSt = dbData[dateStr].joeyStatus || '';
+        const jRem = dbData[dateStr].joeyRemarks || '';
+        const cSt = dbData[dateStr].carmenStatus || '';
+        const cRem = dbData[dateStr].carmenRemarks || '';
+
+        if (!jSt && !jRem && !cSt && !cRem) {
           delete dbData[dateStr];
         } else {
           dbData[dateStr].lastUpdated = nowIso;
@@ -1079,7 +1092,7 @@
           body: payload
         });
 
-        setTimeout(fetchData, 2000);
+        setTimeout(fetchData, 2500);
       } catch (err) {
         console.error("Save error:", err);
       }
