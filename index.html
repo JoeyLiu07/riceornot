@@ -482,6 +482,16 @@
       opacity: 0.85;
     }
 
+    .bill-cycle-dates {
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.15);
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      margin-top: 6px;
+    }
+
     .bill-summary-amount {
       font-size: 2.2rem;
       font-weight: 800;
@@ -500,7 +510,27 @@
     }
 
     .bill-item-desc { font-weight: 800; font-size: 0.95rem; color: var(--text); }
-    .bill-item-date { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); margin-top: 2px; }
+    
+    .bill-item-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .bill-item-date { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); }
+    
+    .badge-tag {
+      font-size: 0.65rem;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }
+
+    .badge-recurring { background: #EEF2FF; color: var(--primary); border: 1px solid #C7D2FE; }
+    .badge-oneoff { background: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0; }
+
     .bill-item-amount { font-weight: 800; font-size: 1rem; color: var(--primary); }
   </style>
 </head>
@@ -554,6 +584,7 @@
     <div class="container">
       <div class="bill-summary-card">
         <div class="bill-summary-title">Total Payable</div>
+        <div class="bill-cycle-dates" id="billCycleDates">Cycle: Current</div>
         <div class="bill-summary-amount" id="billTotalAmount">$0.00</div>
       </div>
       <div id="billList"></div>
@@ -622,12 +653,13 @@
   </div>
 
   <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzFtl3jRLlZdjL4VVIu28iI8wbHiBe6XWLs-8iI9Yt4FKt8-3GTVky6Lvetml07aAJDhg/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx1Z5FdHBk5CjyFeCgtBpxppJkMY8ChVQebNvjJ5EUESLAg8e_K7By6joT8HDNiW3RglQ/exec";
 
     let monthOffset = 0;
     let dbData = {};
     let coupons = [];
     let billItems = [];
+    let billCycle = { start: "", end: "" };
     let selectedDates = new Set();
     let pendingStatus = '';
     let currentUser = 'carmen';
@@ -643,7 +675,14 @@
       if (typeof str === 'string' && str.includes('T')) {
         return str.split('T')[0];
       }
-      return str;
+      const d = new Date(str);
+      if (!isNaN(d.getTime())) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+      }
+      return String(str);
     }
 
     renderCalendar();
@@ -669,6 +708,7 @@
       const cachedData = localStorage.getItem('rice_db_data');
       const cachedCoupons = localStorage.getItem('rice_coupons');
       const cachedBill = localStorage.getItem('rice_bill');
+      const cachedCycle = localStorage.getItem('rice_cycle');
 
       if (cachedData) {
         try { dbData = JSON.parse(cachedData); renderCalendar(); } catch (e) {}
@@ -683,6 +723,7 @@
       if (cachedBill) {
         try {
           billItems = JSON.parse(cachedBill);
+          if (cachedCycle) billCycle = JSON.parse(cachedCycle);
           renderBill();
         } catch (e) {}
       }
@@ -707,7 +748,9 @@
 
           if (freshData.bill) {
             billItems = freshData.bill;
+            if (freshData.cycle) billCycle = freshData.cycle;
             localStorage.setItem('rice_bill', JSON.stringify(billItems));
+            localStorage.setItem('rice_cycle', JSON.stringify(billCycle));
             renderBill();
           }
         }
@@ -753,24 +796,43 @@
     function renderBill() {
       const list = document.getElementById('billList');
       const totalEl = document.getElementById('billTotalAmount');
+      const cycleEl = document.getElementById('billCycleDates');
+
+      // Update Cutoff/Cycle Display
+      if (billCycle && billCycle.start && billCycle.end) {
+        cycleEl.innerText = `Cycle: ${formatDateOnly(billCycle.start)} to ${formatDateOnly(billCycle.end)}`;
+      } else {
+        cycleEl.innerText = `Cycle: Current Settlement`;
+      }
 
       if (!billItems || billItems.length === 0) {
-        list.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 20px; font-weight: 600;">No items for this period!</div>`;
+        list.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 20px; font-weight: 600;">No items for this cycle!</div>`;
         totalEl.innerText = '$0.00';
         return;
       }
+
+      // Sort by date (ascending)
+      billItems.sort((a, b) => new Date(formatDateOnly(a.date)) - new Date(formatDateOnly(b.date)));
 
       let total = 0;
       list.innerHTML = billItems.map(item => {
         const amt = Number(item.amount) || 0;
         total += amt;
         const formattedAmt = amt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const cleanDate = formatDateOnly(item.date);
         
+        const badgeHtml = item.recurring
+          ? `<span class="badge-tag badge-recurring">Recurring</span>`
+          : `<span class="badge-tag badge-oneoff">One-off</span>`;
+
         return `
           <div class="bill-item-card">
             <div>
               <div class="bill-item-desc">${item.description || 'Expense'}</div>
-              <div class="bill-item-date">${formatDateOnly(item.date)}</div>
+              <div class="bill-item-meta">
+                <span class="bill-item-date">${cleanDate}</span>
+                ${badgeHtml}
+              </div>
             </div>
             <div class="bill-item-amount">$${formattedAmt}</div>
           </div>
