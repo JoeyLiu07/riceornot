@@ -426,7 +426,6 @@
       cursor: pointer;
     }
 
-    /* Mum's Bill Grouped Styles */
     .bill-summary-card {
       background: linear-gradient(135deg, #4F46E5, #3730A3);
       color: white;
@@ -603,7 +602,7 @@
   </div>
 
   <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw0WO5GXBVJGIUqjkwdp0vTRijkxvkOqkawT6HIgan9alPuOyhsd2JyRAMlTMaTLfCTNA/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMMwiLgqXued1vfMDe9W9tliRdhmlsXUi_a7pJGbI7p0CImpLCKqYg8O7P7OeM5EDoMg/exec";
 
     let monthOffset = 0;
     let dbData = {};
@@ -1064,12 +1063,11 @@
 
         await fetch(GOOGLE_SCRIPT_URL, {
           method: 'POST',
-          mode: 'no-cors',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: payload
         });
 
-        setTimeout(fetchData, 1500);
+        setTimeout(fetchData, 2000);
       } catch (err) {
         console.error("Save error:", err);
       }
@@ -1174,12 +1172,11 @@
 
         await fetch(GOOGLE_SCRIPT_URL, {
           method: 'POST',
-          mode: 'no-cors',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: payload
         });
 
-        setTimeout(fetchData, 1500);
+        setTimeout(fetchData, 2000);
       } catch (err) {
         console.error("Error syncing coupons:", err);
       }
