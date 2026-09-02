@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Rice or not?</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     :root {
       --bg: #F8FAFC;
@@ -186,7 +187,7 @@
       flex-direction: column;
       cursor: pointer;
       position: relative;
-      aspect-ratio: 1 / 1.25;
+      aspect-ratio: 1 / 1.5;
       overflow: hidden;
     }
 
@@ -209,12 +210,13 @@
       flex: 1;
       display: flex;
       flex-direction: column;
-      justify-content: center;
+      justify-content: flex-start;
       align-items: center;
       width: 100%;
+      margin-top: 2px;
     }
 
-    .status-stack { display: flex; gap: 3px; justify-content: center; align-items: center; }
+    .status-stack { display: flex; gap: 3px; justify-content: center; align-items: center; margin-bottom: 2px; }
     
     .status-circle {
       font-size: 0.6rem;
@@ -233,16 +235,18 @@
     .status-unset { background-color: #CBD5E1; color: #475569; }
 
     .remarks-container {
-      height: 14px;
       display: flex;
+      flex-direction: column;
+      gap: 2px;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       width: 100%;
-      margin-top: 3px;
+      margin-top: 2px;
+      overflow: hidden;
     }
 
     .remarks-box {
-      font-size: 0.55rem;
+      font-size: 0.52rem;
       line-height: 1.1;
       color: var(--text);
       background: #F1F5F9;
@@ -254,6 +258,7 @@
       font-weight: 600;
       text-align: center;
       max-width: 100%;
+      width: 100%;
     }
 
     .action-bar {
@@ -531,12 +536,16 @@
 
   <div id="billView" class="tab-view">
     <div class="container">
-      <div class="bill-summary-card">
-        <div class="bill-summary-title">Total Payable</div>
-        <div class="bill-cycle-dates" id="billCycleDates">Cycle: --</div>
-        <div class="bill-summary-amount" id="billTotalAmount">$0.0</div>
+      <button class="btn-save" style="margin-bottom: 14px; background: var(--today-blue);" onclick="exportBillAsImage()">Export</button>
+
+      <div id="billCaptureArea" style="background: var(--bg); padding: 12px; border-radius: var(--radius);">
+        <div class="bill-summary-card">
+          <div class="bill-summary-title">Total Payable</div>
+          <div class="bill-cycle-dates" id="billCycleDates">Cycle: --</div>
+          <div class="bill-summary-amount" id="billTotalAmount">$0.0</div>
+        </div>
+        <div id="billList"></div>
       </div>
-      <div id="billList"></div>
     </div>
   </div>
 
@@ -829,6 +838,30 @@
       totalEl.innerText = `$${formatNumber1Dec(total)}`;
     }
 
+    async function exportBillAsImage() {
+      const captureElement = document.getElementById('billCaptureArea');
+      if (!captureElement) return;
+
+      try {
+        const canvas = await html2canvas(captureElement, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#F8FAFC'
+        });
+
+        const dateStr = billCycle.end ? formatDateOnly(billCycle.end) : new Date().toISOString().split('T')[0];
+        const fileName = `Mums_Bill_${dateStr}.png`;
+
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      } catch (err) {
+        console.error('Failed to export image:', err);
+        alert('Failed to generate image. Please try again.');
+      }
+    }
+
     function setRole(role) {
       currentUser = role;
       document.getElementById('roleJoey').classList.toggle('active', role === 'joey');
@@ -944,9 +977,16 @@
         const joeySt = dayData.joeyStatus || '';
         const carmenSt = dayData.carmenStatus || '';
 
-        let remarksText = '';
-        if (dayData.joeyRemarks) remarksText += `J:${dayData.joeyRemarks} `;
-        if (dayData.carmenRemarks) remarksText += `C:${dayData.carmenRemarks}`;
+        const joeyRem = (dayData.joeyRemarks || '').trim();
+        const carmenRem = (dayData.carmenRemarks || '').trim();
+
+        let remarksHtml = '';
+        if (joeyRem) {
+          remarksHtml += `<div class="remarks-box" title="J: ${joeyRem}">J:${joeyRem}</div>`;
+        }
+        if (carmenRem) {
+          remarksHtml += `<div class="remarks-box" title="C: ${carmenRem}">C:${carmenRem}</div>`;
+        }
 
         grid.innerHTML += `
           <div class="day-card ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}" onclick="handleDateClick('${dateStr}')">
@@ -957,7 +997,7 @@
                 ${renderBadge('C', carmenSt)}
               </div>
               <div class="remarks-container">
-                ${remarksText ? `<div class="remarks-box" title="${remarksText}">${remarksText}</div>` : ''}
+                ${remarksHtml}
               </div>
             </div>
           </div>
@@ -976,6 +1016,10 @@
       document.getElementById('optYes').className = 'status-option' + (status === 'YES' ? ' selected-yes' : '');
       document.getElementById('optNo').className = 'status-option' + (status === 'NO' ? ' selected-no' : '');
       document.getElementById('optClear').className = 'status-option' + (status === '' ? ' selected-clear' : '');
+
+      if (status === '') {
+        document.getElementById('remarkInput').value = '';
+      }
     }
 
     function batchUpdate(status) {
@@ -1029,7 +1073,7 @@
     }
 
     async function confirmBatchSave() {
-      const remarks = document.getElementById('remarkInput').value;
+      const remarks = pendingStatus === '' ? '' : document.getElementById('remarkInput').value.trim();
       const saveBtn = document.getElementById('saveBtn');
       const datesArray = Array.from(selectedDates);
       const nowIso = new Date().toISOString();
@@ -1047,7 +1091,17 @@
           dbData[dateStr].carmenStatus = pendingStatus;
           dbData[dateStr].carmenRemarks = remarks;
         }
-        dbData[dateStr].lastUpdated = nowIso;
+
+        const jSt = dbData[dateStr].joeyStatus || '';
+        const jRem = dbData[dateStr].joeyRemarks || '';
+        const cSt = dbData[dateStr].carmenStatus || '';
+        const cRem = dbData[dateStr].carmenRemarks || '';
+
+        if (!jSt && !jRem && !cSt && !cRem) {
+          delete dbData[dateStr];
+        } else {
+          dbData[dateStr].lastUpdated = nowIso;
+        }
       });
 
       localStorage.setItem('rice_db_data', JSON.stringify(dbData));
