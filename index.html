@@ -40,28 +40,32 @@
 
     .brand { font-weight: 800; font-size: 1.1rem; color: var(--primary); display: flex; align-items: center; gap: 6px; }
 
-    .role-toggle {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 4px;
-      display: flex;
-      gap: 2px;
+    /* Inline Role Selector in Banner */
+    .banner-role-toggle {
+      display: inline-flex;
+      background: #E0E7FF;
+      border-radius: 12px;
+      padding: 2px;
+      margin-left: 6px;
+      vertical-align: middle;
     }
 
-    .role-btn {
+    .banner-role-btn {
       border: none;
       background: transparent;
-      padding: 5px 12px;
-      border-radius: 16px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: var(--text-muted);
+      padding: 3px 8px;
+      border-radius: 10px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: #4338CA;
       cursor: pointer;
       transition: all 0.2s ease;
     }
 
-    .role-btn.active { background: var(--primary); color: white; }
+    .banner-role-btn.active {
+      background: #4F46E5;
+      color: white;
+    }
 
     .nav-tabs {
       display: flex;
@@ -112,14 +116,6 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-    }
-
-    .user-banner span.user-tag {
-      background: #4F46E5;
-      color: white;
-      padding: 2px 8px;
-      border-radius: 10px;
-      font-weight: 800;
     }
 
     .btn-mode {
@@ -439,10 +435,11 @@
       margin-bottom: 10px;
     }
 
+    /* Muted Grey Export Button */
     .btn-export-out {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      color: var(--primary);
+      background: #F1F5F9;
+      border: 1px solid #CBD5E1;
+      color: #475569;
       padding: 6px 12px;
       border-radius: 12px;
       font-size: 0.78rem;
@@ -451,13 +448,12 @@
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
       transition: all 0.2s ease;
     }
 
     .btn-export-out:active {
       transform: scale(0.96);
-      background: var(--primary-light);
+      background: #E2E8F0;
     }
 
     .bill-summary-card {
@@ -521,10 +517,6 @@
 
   <header>
     <div class="brand">🍚 Rice or not?</div>
-    <div class="role-toggle">
-      <button class="role-btn" id="roleJoey" onclick="setRole('joey')">Joey</button>
-      <button class="role-btn active" id="roleCarmen" onclick="setRole('carmen')">Carmen</button>
-    </div>
   </header>
 
   <div class="nav-tabs">
@@ -534,11 +526,18 @@
   </div>
 
   <div id="calendarView" class="tab-view active">
-    <!-- Coupon Alert Banner moved to top above user banner -->
+    <!-- Coupon Alert Banner -->
     <div id="couponAlertBanner" class="coupon-alert-banner" style="display: none;"></div>
 
+    <!-- User Banner containing Joey / Carmen Toggle -->
     <div class="user-banner">
-      <div>Editing as: <span class="user-tag" id="bannerUser">Carmen</span></div>
+      <div>
+        Editing as:
+        <div class="banner-role-toggle">
+          <button class="banner-role-btn" id="roleJoey" onclick="setRole('joey')">Joey</button>
+          <button class="banner-role-btn active" id="roleCarmen" onclick="setRole('carmen')">Carmen</button>
+        </div>
+      </div>
       <button class="btn-mode" id="bulkToggleBtn" onclick="toggleBulkMode()">Select Multiple</button>
     </div>
 
@@ -566,7 +565,7 @@
 
   <div id="billView" class="tab-view">
     <div class="container">
-      <!-- Export button outside/above card -->
+      <!-- Muted Grey Export Button -->
       <div class="bill-header-bar">
         <button class="btn-export-out" onclick="exportBillAsImage()">
           📤 Export List
@@ -921,7 +920,6 @@
       currentUser = role;
       document.getElementById('roleJoey').classList.toggle('active', role === 'joey');
       document.getElementById('roleCarmen').classList.toggle('active', role === 'carmen');
-      document.getElementById('bannerUser').innerText = role === 'joey' ? 'Joey' : 'Carmen';
       renderCalendar();
     }
 
