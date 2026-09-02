@@ -452,6 +452,7 @@
     }
     .badge-warning { background: #FEF3C7; color: var(--orange); }
     .badge-danger { background: #FEF2F2; color: var(--red); }
+    .badge-noexp { background: #ECFDF5; color: var(--green); }
 
     .btn-delete {
       background: #FEF2F2;
@@ -699,7 +700,7 @@
       <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">COUPON NAME / STORE:</div>
       <input type="text" class="coupon-input" id="couponNameInput" placeholder="e.g., Wellcome $50 Voucher">
 
-      <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">EXPIRY DATE:</div>
+      <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">EXPIRY DATE (OPTIONAL):</div>
       <input type="date" class="coupon-input" id="couponExpiryInput">
 
       <button class="btn-save" id="saveCouponBtn" onclick="saveCoupon()">Save Coupon</button>
@@ -834,8 +835,10 @@
       today.setHours(0, 0, 0, 0);
 
       const expiringList = coupons.filter(c => {
+        if (!c.expiry || c.expiry === 'No Expiry') return false;
         const dateStr = formatDateOnly(c.expiry);
         const expDate = new Date(dateStr);
+        if (isNaN(expDate.getTime())) return false;
         const diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
         return diffDays <= 7;
       });
@@ -1266,21 +1269,35 @@
         return;
       }
 
-      coupons.sort((a, b) => new Date(formatDateOnly(a.expiry)) - new Date(formatDateOnly(b.expiry)));
+      coupons.sort((a, b) => {
+        const isAValid = a.expiry && a.expiry !== 'No Expiry';
+        const isBValid = b.expiry && b.expiry !== 'No Expiry';
+        if (!isAValid && !isBValid) return 0;
+        if (!isAValid) return 1;
+        if (!isBValid) return -1;
+        return new Date(formatDateOnly(a.expiry)) - new Date(formatDateOnly(b.expiry));
+      });
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
       list.innerHTML = coupons.map((c, i) => {
-        const cleanExpiry = formatDateOnly(c.expiry);
-        const expDate = new Date(cleanExpiry);
-        const diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
-        
-        let badgeHtml = '';
-        if (diffDays < 0) {
-          badgeHtml = `<span class="badge-exp badge-danger">Expired</span>`;
-        } else if (diffDays <= 7) {
-          badgeHtml = `<span class="badge-exp badge-warning">Expires in ${diffDays} day(s)</span>`;
+        let cleanExpiry = 'No Expiry';
+        let badgeHtml = '<span class="badge-exp badge-noexp">Infinite</span>';
+
+        if (c.expiry && c.expiry !== 'No Expiry') {
+          cleanExpiry = formatDateOnly(c.expiry);
+          const expDate = new Date(cleanExpiry);
+          if (!isNaN(expDate.getTime())) {
+            const diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
+            if (diffDays < 0) {
+              badgeHtml = `<span class="badge-exp badge-danger">Expired</span>`;
+            } else if (diffDays <= 7) {
+              badgeHtml = `<span class="badge-exp badge-warning">Expires in ${diffDays} day(s)</span>`;
+            } else {
+              badgeHtml = '';
+            }
+          }
         }
 
         return `
@@ -1304,10 +1321,10 @@
 
     async function saveCoupon() {
       const name = document.getElementById('couponNameInput').value.trim();
-      const expiry = document.getElementById('couponExpiryInput').value;
+      const expiry = document.getElementById('couponExpiryInput').value || 'No Expiry';
 
-      if (!name || !expiry) {
-        alert("Please fill in both the coupon name and expiry date.");
+      if (!name) {
+        alert("Please fill in the coupon name.");
         return;
       }
 
