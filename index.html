@@ -40,28 +40,41 @@
 
     .brand { font-weight: 800; font-size: 1.1rem; color: var(--primary); display: flex; align-items: center; gap: 6px; }
 
+    /* Enlarged Banner & Role Toggle */
+    .user-banner {
+      background: #E0E7FF;
+      border-bottom: 2px solid #A5B4FC;
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #312E81;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
     .banner-role-toggle {
       display: inline-flex;
-      background: #E2E8F0;
-      border-radius: 12px;
-      padding: 2px;
-      margin-left: 6px;
+      background: #C7D2FE;
+      border-radius: 14px;
+      padding: 3px;
+      margin-left: 8px;
       vertical-align: middle;
     }
 
     .banner-role-btn {
       border: none;
       background: transparent;
-      padding: 4px 0;
-      width: 54px;
+      padding: 6px 0;
+      width: 72px;
       text-align: center;
-      border-radius: 10px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: var(--text-muted);
+      border-radius: 11px;
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: #4338CA;
       cursor: pointer;
       transition: all 0.2s ease;
-      opacity: 0.7;
+      opacity: 0.75;
     }
 
     .banner-role-btn.active {
@@ -69,7 +82,7 @@
       color: white;
       font-weight: 800;
       opacity: 1;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 5px rgba(79, 70, 229, 0.3);
     }
 
     .nav-tabs {
@@ -111,26 +124,14 @@
 
     .coupon-alert-item { display: flex; align-items: center; gap: 6px; }
 
-    .user-banner {
-      background: #EEF2FF;
-      border-bottom: 1px solid #C7D2FE;
-      padding: 8px 16px;
-      font-size: 0.82rem;
-      font-weight: 700;
-      color: #3730A3;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
     .btn-mode {
       background: white;
-      border: 1px solid #C7D2FE;
+      border: 1px solid #A5B4FC;
       color: var(--primary);
-      padding: 4px 10px;
+      padding: 6px 12px;
       border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 700;
+      font-size: 0.8rem;
+      font-weight: 800;
       cursor: pointer;
     }
 
@@ -198,7 +199,6 @@
     .day-card.today .day-num { color: var(--today-blue); }
     .day-card.selected { border: 2px solid var(--primary); background: var(--primary-light); }
 
-    /* Absolute Top Left Date Number */
     .day-num { 
       font-size: 0.75rem; 
       font-weight: 800; 
@@ -210,7 +210,6 @@
       z-index: 2;
     }
 
-    /* Centered Inner Container */
     .day-content {
       flex: 1;
       display: flex;
@@ -531,41 +530,41 @@
       margin: 12px 0 6px 4px;
     }
 
-    /* Compact Item Cards */
+    /* Wrap-enabled Compact Bill Card */
     .bill-item-card {
       background: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 8px 12px;
-      margin-bottom: 4px;
+      margin-bottom: 5px;
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
       gap: 12px;
     }
 
     .bill-item-info {
       display: flex;
-      align-items: center;
-      gap: 8px;
+      flex-direction: column;
+      gap: 2px;
       flex: 1;
       min-width: 0;
     }
 
+    .bill-item-date { 
+      font-size: 0.72rem; 
+      font-weight: 700; 
+      color: var(--text-muted); 
+    }
+
+    /* Text wrapping for descriptions */
     .bill-item-desc { 
       font-weight: 700; 
       font-size: 0.88rem; 
       color: var(--text); 
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .bill-item-date { 
-      font-size: 0.75rem; 
-      font-weight: 600; 
-      color: var(--text-muted); 
-      flex-shrink: 0;
+      line-height: 1.25;
+      word-break: break-word;
+      white-space: normal;
     }
 
     .bill-item-amount { 
@@ -573,6 +572,7 @@
       font-size: 0.92rem; 
       color: var(--primary); 
       flex-shrink: 0;
+      padding-top: 1px;
     }
 
     .bill-item-amount.deduct { color: var(--red); }
@@ -594,7 +594,7 @@
     <div id="couponAlertBanner" class="coupon-alert-banner" style="display: none;"></div>
 
     <div class="user-banner">
-      <div>
+      <div style="display: flex; align-items: center;">
         Editing as:
         <div class="banner-role-toggle">
           <button class="banner-role-btn" id="roleJoey" onclick="setRole('joey')">Joey</button>
