@@ -40,7 +40,7 @@
 
     .brand { font-weight: 800; font-size: 1.1rem; color: var(--primary); display: flex; align-items: center; gap: 6px; }
 
-    /* Enlarged Banner & Role Toggle */
+    /* Banner & Role Toggle */
     .user-banner {
       background: #E0E7FF;
       border-bottom: 2px solid #A5B4FC;
@@ -530,7 +530,6 @@
       margin: 12px 0 6px 4px;
     }
 
-    /* Wrap-enabled Compact Bill Card */
     .bill-item-card {
       background: var(--card-bg);
       border: 1px solid var(--border);
@@ -557,7 +556,6 @@
       color: var(--text-muted); 
     }
 
-    /* Text wrapping for descriptions */
     .bill-item-desc { 
       font-weight: 700; 
       font-size: 0.88rem; 
@@ -601,7 +599,7 @@
           <button class="banner-role-btn active" id="roleCarmen" onclick="setRole('carmen')">Carmen</button>
         </div>
       </div>
-      <button class="btn-mode" id="bulkToggleBtn" onclick="toggleBulkMode()">Select Multiple</button>
+      <button class="btn-mode" id="bulkToggleBtn" onclick="toggleBulkMode()">Select Dates</button>
     </div>
 
     <div class="container">
@@ -992,7 +990,7 @@
       
       const btn = document.getElementById('bulkToggleBtn');
       btn.classList.toggle('active', isBulkMode);
-      btn.innerText = isBulkMode ? 'Done Selecting' : 'Select Multiple';
+      btn.innerText = isBulkMode ? 'Done Selecting Dates' : 'Select Dates';
       document.getElementById('actionBar').style.display = isBulkMode ? 'flex' : 'none';
       
       renderCalendar();
