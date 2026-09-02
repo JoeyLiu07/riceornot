@@ -462,6 +462,46 @@
       font-weight: 700;
       cursor: pointer;
     }
+
+    /* Mum's Bill Styles */
+    .bill-summary-card {
+      background: linear-gradient(135deg, #4F46E5, #3730A3);
+      color: white;
+      border-radius: var(--radius);
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+    }
+
+    .bill-summary-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      opacity: 0.85;
+    }
+
+    .bill-summary-amount {
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin-top: 4px;
+    }
+
+    .bill-item-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .bill-item-desc { font-weight: 800; font-size: 0.95rem; color: var(--text); }
+    .bill-item-date { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); margin-top: 2px; }
+    .bill-item-amount { font-weight: 800; font-size: 1rem; color: var(--primary); }
   </style>
 </head>
 <body>
@@ -477,6 +517,7 @@
   <div class="nav-tabs">
     <button class="tab-btn active" id="tabBtnCalendar" onclick="switchTab('calendar')">📅 Calendar</button>
     <button class="tab-btn" id="tabBtnCoupons" onclick="switchTab('coupons')">🎟️ Coupons</button>
+    <button class="tab-btn" id="tabBtnBill" onclick="switchTab('bill')">💳 Mum's Bill</button>
   </div>
 
   <div id="calendarView" class="tab-view active">
@@ -506,6 +547,16 @@
     <div class="container">
       <button class="btn-save" style="margin-bottom: 14px;" onclick="openAddCouponModal()">+ Add New Coupon</button>
       <div id="couponsList"></div>
+    </div>
+  </div>
+
+  <div id="billView" class="tab-view">
+    <div class="container">
+      <div class="bill-summary-card">
+        <div class="bill-summary-title">Total Payable</div>
+        <div class="bill-summary-amount" id="billTotalAmount">$0.00</div>
+      </div>
+      <div id="billList"></div>
     </div>
   </div>
 
@@ -571,11 +622,12 @@
   </div>
 
   <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzNI_NOrYiL6rlZW1jPQoi_ptEC-gPmP6cnd99pUDY-euheQsq-6kIicF1C8ZIw4HmnCw/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzFtl3jRLlZdjL4VVIu28iI8wbHiBe6XWLs-8iI9Yt4FKt8-3GTVky6Lvetml07aAJDhg/exec";
 
     let monthOffset = 0;
     let dbData = {};
     let coupons = [];
+    let billItems = [];
     let selectedDates = new Set();
     let pendingStatus = '';
     let currentUser = 'carmen';
@@ -600,10 +652,13 @@
     function switchTab(tab) {
       document.getElementById('tabBtnCalendar').classList.toggle('active', tab === 'calendar');
       document.getElementById('tabBtnCoupons').classList.toggle('active', tab === 'coupons');
+      document.getElementById('tabBtnBill').classList.toggle('active', tab === 'bill');
+      
       document.getElementById('calendarView').classList.toggle('active', tab === 'calendar');
       document.getElementById('couponsView').classList.toggle('active', tab === 'coupons');
+      document.getElementById('billView').classList.toggle('active', tab === 'bill');
 
-      if (tab === 'coupons') {
+      if (tab === 'coupons' || tab === 'bill') {
         document.getElementById('actionBar').style.display = 'none';
       } else if (isBulkMode) {
         document.getElementById('actionBar').style.display = 'flex';
@@ -613,6 +668,8 @@
     async function fetchData() {
       const cachedData = localStorage.getItem('rice_db_data');
       const cachedCoupons = localStorage.getItem('rice_coupons');
+      const cachedBill = localStorage.getItem('rice_bill');
+
       if (cachedData) {
         try { dbData = JSON.parse(cachedData); renderCalendar(); } catch (e) {}
       }
@@ -621,6 +678,12 @@
           coupons = JSON.parse(cachedCoupons); 
           renderCoupons(); 
           checkExpiringCoupons();
+        } catch (e) {}
+      }
+      if (cachedBill) {
+        try {
+          billItems = JSON.parse(cachedBill);
+          renderBill();
         } catch (e) {}
       }
 
@@ -633,10 +696,6 @@
             dbData = freshData.calendar;
             localStorage.setItem('rice_db_data', JSON.stringify(dbData));
             renderCalendar();
-          } else if (typeof freshData === 'object' && !freshData.coupons) {
-            dbData = freshData;
-            localStorage.setItem('rice_db_data', JSON.stringify(dbData));
-            renderCalendar();
           }
 
           if (freshData.coupons) {
@@ -644,6 +703,12 @@
             localStorage.setItem('rice_coupons', JSON.stringify(coupons));
             renderCoupons();
             checkExpiringCoupons();
+          }
+
+          if (freshData.bill) {
+            billItems = freshData.bill;
+            localStorage.setItem('rice_bill', JSON.stringify(billItems));
+            renderBill();
           }
         }
       } catch (e) {
@@ -683,6 +748,36 @@
       }).join('');
 
       banner.style.display = 'flex';
+    }
+
+    function renderBill() {
+      const list = document.getElementById('billList');
+      const totalEl = document.getElementById('billTotalAmount');
+
+      if (!billItems || billItems.length === 0) {
+        list.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 20px; font-weight: 600;">No items for this period!</div>`;
+        totalEl.innerText = '$0.00';
+        return;
+      }
+
+      let total = 0;
+      list.innerHTML = billItems.map(item => {
+        const amt = Number(item.amount) || 0;
+        total += amt;
+        const formattedAmt = amt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        
+        return `
+          <div class="bill-item-card">
+            <div>
+              <div class="bill-item-desc">${item.description || 'Expense'}</div>
+              <div class="bill-item-date">${formatDateOnly(item.date)}</div>
+            </div>
+            <div class="bill-item-amount">$${formattedAmt}</div>
+          </div>
+        `;
+      }).join('');
+
+      totalEl.innerText = `$${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
 
     function setRole(role) {
