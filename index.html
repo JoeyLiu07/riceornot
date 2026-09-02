@@ -60,10 +60,7 @@
       transition: all 0.2s ease;
     }
 
-    .role-btn.active {
-      background: var(--primary);
-      color: white;
-    }
+    .role-btn.active { background: var(--primary); color: white; }
 
     .nav-tabs {
       display: flex;
@@ -85,10 +82,7 @@
       cursor: pointer;
     }
 
-    .tab-btn.active {
-      color: var(--primary);
-      border-bottom-color: var(--primary);
-    }
+    .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
 
     .tab-view { display: none; }
     .tab-view.active { display: block; }
@@ -125,11 +119,7 @@
       gap: 4px;
     }
 
-    .coupon-alert-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
+    .coupon-alert-item { display: flex; align-items: center; gap: 6px; }
 
     .btn-mode {
       background: white;
@@ -142,11 +132,7 @@
       cursor: pointer;
     }
 
-    .btn-mode.active {
-      background: var(--primary);
-      color: white;
-      border-color: var(--primary);
-    }
+    .btn-mode.active { background: var(--primary); color: white; border-color: var(--primary); }
 
     .container { max-width: 500px; margin: 0 auto; padding: 12px; }
 
@@ -189,11 +175,7 @@
       gap: 4px;
     }
 
-    .calendar-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 4px;
-    }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
 
     .day-card {
       background: var(--card-bg);
@@ -209,19 +191,9 @@
     }
 
     .day-card.empty { background: transparent; border: none; cursor: default; }
-    
-    .day-card.today { 
-      border: 2px solid var(--today-blue); 
-      background: var(--today-bg);
-    }
-    .day-card.today .day-num {
-      color: var(--today-blue);
-    }
-    
-    .day-card.selected {
-      border: 2px solid var(--primary);
-      background: var(--primary-light);
-    }
+    .day-card.today { border: 2px solid var(--today-blue); background: var(--today-bg); }
+    .day-card.today .day-num { color: var(--today-blue); }
+    .day-card.selected { border: 2px solid var(--primary); background: var(--primary-light); }
 
     .day-num { 
       font-size: 0.75rem; 
@@ -303,11 +275,7 @@
       z-index: 90;
     }
 
-    .action-btns {
-      display: flex;
-      gap: 6px;
-      width: 100%;
-    }
+    .action-btns { display: flex; gap: 6px; width: 100%; }
 
     .btn-action {
       flex: 1;
@@ -368,12 +336,7 @@
       font-weight: 600;
     }
 
-    .status-picker {
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-      margin-bottom: 14px;
-    }
+    .status-picker { display: flex; gap: 8px; margin-top: 12px; margin-bottom: 14px; }
 
     .status-option {
       flex: 1;
@@ -430,7 +393,7 @@
       background: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 12px 14px;
+      padding: 12px 16px;
       margin-bottom: 8px;
       display: flex;
       justify-content: space-between;
@@ -463,7 +426,7 @@
       cursor: pointer;
     }
 
-    /* Mum's Bill Styles */
+    /* Mum's Bill Grouped Styles */
     .bill-summary-card {
       background: linear-gradient(135deg, #4F46E5, #3730A3);
       color: white;
@@ -492,10 +455,15 @@
       margin-top: 6px;
     }
 
-    .bill-summary-amount {
-      font-size: 2.2rem;
+    .bill-summary-amount { font-size: 2.2rem; font-weight: 800; margin-top: 4px; }
+
+    .bill-group-header {
+      font-size: 0.8rem;
       font-weight: 800;
-      margin-top: 4px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 16px 0 8px 4px;
     }
 
     .bill-item-card {
@@ -510,14 +478,7 @@
     }
 
     .bill-item-desc { font-weight: 800; font-size: 0.95rem; color: var(--text); }
-    
-    .bill-item-meta {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-top: 4px;
-    }
-
+    .bill-item-meta { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
     .bill-item-date { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); }
     
     .badge-tag {
@@ -529,8 +490,6 @@
     }
 
     .badge-recurring { background: #EEF2FF; color: var(--primary); border: 1px solid #C7D2FE; }
-    .badge-oneoff { background: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0; }
-
     .bill-item-amount { font-weight: 800; font-size: 1rem; color: var(--primary); }
   </style>
 </head>
@@ -584,7 +543,7 @@
     <div class="container">
       <div class="bill-summary-card">
         <div class="bill-summary-title">Total Payable</div>
-        <div class="bill-cycle-dates" id="billCycleDates">Cycle: Current</div>
+        <div class="bill-cycle-dates" id="billCycleDates">Cycle: --</div>
         <div class="bill-summary-amount" id="billTotalAmount">$0.00</div>
       </div>
       <div id="billList"></div>
@@ -653,7 +612,7 @@
   </div>
 
   <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx1Z5FdHBk5CjyFeCgtBpxppJkMY8ChVQebNvjJ5EUESLAg8e_K7By6joT8HDNiW3RglQ/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw9R9V5u-kDViPig2iW7YoRdaHWaJRy9UY7wqvr_mPiu_DGt3hWYK7_xOAoLm2ibR5hXA/exec";
 
     let monthOffset = 0;
     let dbData = {};
@@ -806,24 +765,27 @@
       }
 
       if (!billItems || billItems.length === 0) {
-        list.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 20px; font-weight: 600;">No items for this cycle!</div>`;
+        list.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 20px; font-weight: 600;">No active items for this cycle!</div>`;
         totalEl.innerText = '$0.00';
         return;
       }
 
-      // Sort by date (ascending)
-      billItems.sort((a, b) => new Date(formatDateOnly(a.date)) - new Date(formatDateOnly(b.date)));
+      // Split items into One-off and Recurring
+      const oneOffItems = billItems.filter(i => !i.recurring);
+      const recurringItems = billItems.filter(i => i.recurring);
+
+      // Sort chronologically within each group
+      oneOffItems.sort((a, b) => new Date(formatDateOnly(a.date)) - new Date(formatDateOnly(b.date)));
+      recurringItems.sort((a, b) => new Date(formatDateOnly(a.date)) - new Date(formatDateOnly(b.date)));
 
       let total = 0;
-      list.innerHTML = billItems.map(item => {
+      let html = '';
+
+      const renderCard = (item, isRec) => {
         const amt = Number(item.amount) || 0;
         total += amt;
         const formattedAmt = amt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         const cleanDate = formatDateOnly(item.date);
-        
-        const badgeHtml = item.recurring
-          ? `<span class="badge-tag badge-recurring">Recurring</span>`
-          : `<span class="badge-tag badge-oneoff">One-off</span>`;
 
         return `
           <div class="bill-item-card">
@@ -831,14 +793,27 @@
               <div class="bill-item-desc">${item.description || 'Expense'}</div>
               <div class="bill-item-meta">
                 <span class="bill-item-date">${cleanDate}</span>
-                ${badgeHtml}
+                ${isRec ? `<span class="badge-tag badge-recurring">Recurring</span>` : ''}
               </div>
             </div>
             <div class="bill-item-amount">$${formattedAmt}</div>
           </div>
         `;
-      }).join('');
+      };
 
+      // 1. One-off Section
+      if (oneOffItems.length > 0) {
+        html += `<div class="bill-group-header">One-off Expenses</div>`;
+        html += oneOffItems.map(i => renderCard(i, false)).join('');
+      }
+
+      // 2. Recurring Section
+      if (recurringItems.length > 0) {
+        html += `<div class="bill-group-header">Recurring Items</div>`;
+        html += recurringItems.map(i => renderCard(i, true)).join('');
+      }
+
+      list.innerHTML = html;
       totalEl.innerText = `$${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
 
@@ -945,7 +920,7 @@
         grid.innerHTML += `<div class="day-card empty"></div>`;
       }
 
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = formatDateOnly(new Date());
 
       for (let day = 1; day <= totalDays; day++) {
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
