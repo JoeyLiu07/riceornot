@@ -571,7 +571,7 @@
   </div>
 
   <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyPiYNIqrRDChTZhcsRA4q9k82nNHqeB-AJESfpNCsKdcJKF1FjSpKxCkBk1ke1SjYPIQ/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzNI_NOrYiL6rlZW1jPQoi_ptEC-gPmP6cnd99pUDY-euheQsq-6kIicF1C8ZIw4HmnCw/exec";
 
     let monthOffset = 0;
     let dbData = {};
@@ -585,6 +585,14 @@
     const now = new Date();
     let currentYear = now.getFullYear();
     let currentMonth = now.getMonth();
+
+    function formatDateOnly(str) {
+      if (!str) return '';
+      if (typeof str === 'string' && str.includes('T')) {
+        return str.split('T')[0];
+      }
+      return str;
+    }
 
     renderCalendar();
     fetchData();
@@ -654,7 +662,8 @@
       today.setHours(0, 0, 0, 0);
 
       const expiringList = coupons.filter(c => {
-        const expDate = new Date(c.expiry);
+        const dateStr = formatDateOnly(c.expiry);
+        const expDate = new Date(dateStr);
         const diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
         return diffDays <= 7;
       });
@@ -665,11 +674,12 @@
       }
 
       banner.innerHTML = expiringList.map(c => {
-        const expDate = new Date(c.expiry);
+        const dateStr = formatDateOnly(c.expiry);
+        const expDate = new Date(dateStr);
         const diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
         const statusText = diffDays < 0 ? 'is expired' : (diffDays === 0 ? 'expires today' : `expires in ${diffDays} day(s)`);
         
-        return `<div class="coupon-alert-item">⚠️ <strong>${c.name}</strong> ${statusText} on ${c.expiry}!</div>`;
+        return `<div class="coupon-alert-item">⚠️ <strong>${c.name}</strong> ${statusText} on ${dateStr}!</div>`;
       }).join('');
 
       banner.style.display = 'flex';
@@ -946,13 +956,14 @@
         return;
       }
 
-      coupons.sort((a, b) => new Date(a.expiry) - new Date(b.expiry));
+      coupons.sort((a, b) => new Date(formatDateOnly(a.expiry)) - new Date(formatDateOnly(b.expiry)));
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
       list.innerHTML = coupons.map((c, i) => {
-        const expDate = new Date(c.expiry);
+        const cleanExpiry = formatDateOnly(c.expiry);
+        const expDate = new Date(cleanExpiry);
         const diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
         
         let badgeHtml = '';
@@ -966,7 +977,7 @@
           <div class="coupon-card">
             <div class="coupon-info">
               <div class="coupon-title">${c.name}</div>
-              <div class="coupon-expiry">Expires: ${c.expiry}</div>
+              <div class="coupon-expiry">Expires: ${cleanExpiry}</div>
               ${badgeHtml}
             </div>
             <button class="btn-delete" onclick="deleteCoupon(${i})">Used / Delete</button>
