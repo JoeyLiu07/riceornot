@@ -611,7 +611,7 @@
         <div class="bill-summary-card">
           <div class="bill-summary-title">Total Payable</div>
           <div class="bill-cycle-dates" id="billCycleDates">Cycle: --</div>
-          <div class="bill-summary-amount" id="billTotalAmount">$0.0</div>
+          <div class="bill-summary-amount" id="billTotalAmount">$0</div>
         </div>
         <div id="billList"></div>
       </div>
@@ -846,7 +846,7 @@
 
       if (!billItems || billItems.length === 0) {
         list.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 20px; font-weight: 600;">No active items for this cycle!</div>`;
-        totalEl.innerText = '$0.0';
+        totalEl.innerText = '$0';
         return;
       }
 
@@ -904,7 +904,7 @@
       }
 
       list.innerHTML = html;
-      totalEl.innerText = `$${formatNumber1Dec(total)}`;
+      totalEl.innerText = `$${Math.round(total)}`;
     }
 
     async function exportBillAsImage() {
