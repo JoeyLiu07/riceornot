@@ -2,10 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Rice or not?</title>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meal & Coupon Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #F8FAFC;
@@ -178,7 +177,13 @@
       gap: 3px;
     }
 
-    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+    /* Enforces rigid cross-cell horizontal row alignment */
+    .calendar-grid { 
+      display: grid; 
+      grid-template-columns: repeat(7, 1fr); 
+      grid-auto-rows: 68px; 
+      gap: 3px; 
+    }
 
     .day-card {
       background: var(--card-bg);
@@ -189,7 +194,7 @@
       flex-direction: column;
       cursor: pointer;
       position: relative;
-      aspect-ratio: 1 / 1.5;
+      height: 100%;
       overflow: hidden;
     }
 
@@ -198,9 +203,8 @@
     .day-card.today .day-num { color: var(--today-blue); }
     .day-card.selected { border: 2px solid var(--primary); background: var(--primary-light); }
 
-    /* Absolute Top Left Date Number */
     .day-num { 
-      font-size: 0.7rem; 
+      font-size: 0.68rem; 
       font-weight: 800; 
       color: var(--text-muted); 
       line-height: 1; 
@@ -210,31 +214,31 @@
       z-index: 2;
     }
 
-    /* Centered Inner Container */
+    /* Fixed top padding ensures layout lock step across cells */
     .day-content {
       flex: 1;
       display: flex;
       flex-direction: column;
-      justify-content: center;
+      justify-content: flex-start;
       align-items: center;
       width: 100%;
-      padding-top: 10px; /* Offset space for top-left day-num */
+      padding-top: 16px;
     }
 
     .status-stack { 
       display: flex; 
-      gap: 3px; 
+      gap: 2px; 
       justify-content: center; 
       align-items: center; 
-      height: 18px;
-      margin-bottom: 2px;
+      height: 16px;
+      margin-bottom: 3px;
     }
     
     .status-circle {
       font-size: 0.55rem;
       font-weight: 800;
-      width: 16px;
-      height: 16px;
+      width: 15px;
+      height: 15px;
       border-radius: 50%;
       display: inline-flex;
       align-items: center;
@@ -252,13 +256,14 @@
       flex-direction: column;
       gap: 2px;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       width: 100%;
+      height: 28px;
       overflow: hidden;
     }
 
     .remarks-box {
-      font-size: 0.5rem;
+      font-size: 0.48rem;
       line-height: 1.1;
       color: var(--text);
       background: #F1F5F9;
@@ -271,6 +276,7 @@
       text-align: center;
       max-width: 100%;
       width: 100%;
+      height: 12px;
     }
 
     .action-bar {
@@ -552,34 +558,30 @@
 <body>
 
   <header>
-    <div class="brand">🍚 Rice or not?</div>
+    <div class="brand">
+      <span>🍱</span> Meal Tracker
+      <div class="banner-role-toggle">
+        <button class="banner-role-btn active" id="bannerBtnJ" onclick="setUserRole('J')">J</button>
+        <button class="banner-role-btn" id="bannerBtnC" onclick="setUserRole('C')">C</button>
+      </div>
+    </div>
   </header>
 
   <div class="nav-tabs">
-    <button class="tab-btn active" id="tabBtnCalendar" onclick="switchTab('calendar')">📅 Calendar</button>
-    <button class="tab-btn" id="tabBtnCoupons" onclick="switchTab('coupons')">🎟️ Coupons</button>
-    <button class="tab-btn" id="tabBtnBill" onclick="switchTab('bill')">💳 Mum's Bill</button>
+    <button class="tab-btn active" onclick="switchTab('calendar')">Calendar</button>
+    <button class="tab-btn" onclick="switchTab('coupons')">Coupons</button>
+    <button class="tab-btn" onclick="switchTab('bill')">Monthly Bill</button>
   </div>
 
-  <div id="calendarView" class="tab-view active">
-    <div id="couponAlertBanner" class="coupon-alert-banner" style="display: none;"></div>
+  <div id="couponAlertBanner" class="coupon-alert-banner" style="display:none;"></div>
 
-    <div class="user-banner">
-      <div>
-        Editing as:
-        <div class="banner-role-toggle">
-          <button class="banner-role-btn" id="roleJoey" onclick="setRole('joey')">Joey</button>
-          <button class="banner-role-btn active" id="roleCarmen" onclick="setRole('carmen')">Carmen</button>
-        </div>
-      </div>
-      <button class="btn-mode" id="bulkToggleBtn" onclick="toggleBulkMode()">Select Multiple</button>
-    </div>
-
-    <div class="container">
+  <div class="container">
+    <!-- CALENDAR TAB -->
+    <div id="tab-calendar" class="tab-view active">
       <div class="calendar-header">
-        <button class="nav-btn" id="prevBtn" onclick="changeMonth(-1)">‹</button>
-        <div class="month-title" id="monthTitle">--</div>
-        <button class="nav-btn" id="nextBtn" onclick="changeMonth(1)">›</button>
+        <button class="nav-btn" onclick="changeMonth(-1)">&lt;</button>
+        <div class="month-title" id="monthTitle">-- ----</div>
+        <button class="nav-btn" onclick="changeMonth(1)">&gt;</button>
       </div>
 
       <div class="weekdays">
@@ -588,753 +590,293 @@
 
       <div class="calendar-grid" id="calendarGrid"></div>
     </div>
-  </div>
 
-  <div id="couponsView" class="tab-view">
-    <div class="container">
-      <div style="display: flex; justify-content: flex-end;">
-        <button class="btn-add-coupon" onclick="openAddCouponModal()">+ Add Coupon</button>
-      </div>
+    <!-- COUPONS TAB -->
+    <div id="tab-coupons" class="tab-view">
+      <button class="btn-add-coupon" onclick="openAddCouponModal()">+ Add New Coupon</button>
       <div id="couponsList"></div>
     </div>
-  </div>
 
-  <div id="billView" class="tab-view">
-    <div class="container">
+    <!-- BILL TAB -->
+    <div id="tab-bill" class="tab-view">
       <div class="bill-header-bar">
-        <button class="btn-export-out" onclick="exportBillAsImage()">
-          📤 Export List
-        </button>
+        <button class="btn-export-out" onclick="exportBill()">📥 Export Statement</button>
       </div>
-
-      <div id="billCaptureArea" style="background: var(--bg); padding: 4px; border-radius: var(--radius);">
-        <div class="bill-summary-card">
-          <div class="bill-summary-title">Total Payable</div>
-          <div class="bill-cycle-dates" id="billCycleDates">Cycle: --</div>
-          <div class="bill-summary-amount" id="billTotalAmount">$0.0</div>
-        </div>
-        <div id="billList"></div>
+      <div class="bill-summary-card">
+        <div class="bill-summary-title">Statement Balance</div>
+        <div class="bill-cycle-dates" id="billCycleDates">Cycle: --</div>
+        <div class="bill-summary-amount" id="billTotalAmount">₹0</div>
       </div>
+      <div class="bill-group-header">Breakdown</div>
+      <div id="billBreakdownList"></div>
     </div>
   </div>
 
-  <div class="action-bar" id="actionBar" style="display: none;">
+  <!-- FLOATING ACTION BAR -->
+  <div class="action-bar" id="actionBar">
     <div class="action-btns">
-      <button class="btn-action yes" onclick="batchUpdate('YES')">✓ Home (<span id="countYes">0</span>)</button>
-      <button class="btn-action no" onclick="batchUpdate('NO')">✕ Out (<span id="countNo">0</span>)</button>
-      <button class="btn-action edit" onclick="openEditModal()">✎ Edit Selected</button>
+      <button class="btn-action yes" onclick="quickSetStatus('YES')">✓ Eat</button>
+      <button class="btn-action no" onclick="quickSetStatus('NO')">✗ Skip</button>
+      <button class="btn-action edit" onclick="openEditModal()">✎ Details</button>
     </div>
   </div>
 
-  <div class="modal" id="detailModal">
+  <!-- MODAL FOR EDITING MEAL DETAILS -->
+  <div class="modal" id="editModal">
     <div class="modal-content">
-      <h3 style="font-size: 1.1rem; font-weight: 800;" id="detailTitle">Date Details</h3>
+      <h3 style="margin-bottom: 12px;" id="modalDateTitle">Edit Details</h3>
       
-      <div class="detail-row">
-        <div class="detail-user">JOEY</div>
-        <div class="detail-val" id="detailJoey">--</div>
-      </div>
-
-      <div class="detail-row">
-        <div class="detail-user">CARMEN</div>
-        <div class="detail-val" id="detailCarmen">--</div>
-      </div>
-
-      <div id="detailLastUpdated"></div>
-
-      <button class="btn-edit-direct" onclick="editCurrentSingleDate()">✎ Edit My Entry</button>
-    </div>
-  </div>
-
-  <div class="modal" id="remarkModal">
-    <div class="modal-content">
-      <h3 style="font-size: 1.1rem; font-weight: 800;" id="modalTitle">Edit Details</h3>
-      <div id="lastUpdatedBox"></div>
-      
-      <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-top: 12px;">STATUS:</div>
       <div class="status-picker">
-        <button class="status-option" id="optYes" onclick="selectModalStatus('YES')">✓ Home</button>
-        <button class="status-option" id="optNo" onclick="selectModalStatus('NO')">✕ Out</button>
-        <button class="status-option" id="optClear" onclick="selectModalStatus('')">↺ Clear</button>
+        <button class="status-option" id="optYes" onclick="selectModalStatus('YES')">Eat</button>
+        <button class="status-option" id="optNo" onclick="selectModalStatus('NO')">Skip</button>
+        <button class="status-option" id="optClear" onclick="selectModalStatus('UNSET')">Clear</button>
       </div>
 
-      <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">REMARKS:</div>
-      <input type="text" class="remark-input" id="remarkInput" placeholder="Add or edit remarks...">
-      
-      <button class="btn-save" id="saveBtn" onclick="confirmBatchSave()">Save Updates</button>
+      <input type="text" id="modalRemark" class="remark-input" placeholder="Add optional remark/note...">
+      <button class="btn-save" onclick="saveMealDetails()">Save</button>
     </div>
   </div>
 
+  <!-- MODAL FOR ADDING COUPON -->
   <div class="modal" id="couponModal">
     <div class="modal-content">
-      <h3 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 12px;">Add New Coupon</h3>
-      
-      <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">COUPON NAME / STORE:</div>
-      <input type="text" class="coupon-input" id="couponNameInput" placeholder="e.g., Wellcome $50 Voucher">
-
-      <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">EXPIRY DATE:</div>
-      <input type="date" class="coupon-input" id="couponExpiryInput">
-
-      <button class="btn-save" id="saveCouponBtn" onclick="saveCoupon()">Save Coupon</button>
+      <h3 style="margin-bottom: 12px;">Add Coupon</h3>
+      <input type="text" id="couponTitle" class="coupon-input" placeholder="Coupon Name / Code">
+      <input type="date" id="couponExpiry" class="coupon-input">
+      <button class="btn-save" onclick="saveCoupon()">Add Coupon</button>
     </div>
   </div>
 
   <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMMwiLgqXued1vfMDe9W9tliRdhmlsXUi_a7pJGbI7p0CImpLCKqYg8O7P7OeM5EDoMg/exec";
+    let currentUser = 'J';
+    let currentDate = new Date();
+    let selectedDateStr = null;
+    let modalSelectedStatus = 'UNSET';
 
-    let monthOffset = 0;
-    let dbData = {};
+    // Mock Data Store
+    let mealData = {}; 
     let coupons = [];
-    let billItems = [];
-    let billCycle = { start: "", end: "" };
-    let selectedDates = new Set();
-    let pendingStatus = '';
-    let currentUser = 'carmen';
-    let isBulkMode = false;
-    let activeSingleDate = null;
 
-    const now = new Date();
-    let currentYear = now.getFullYear();
-    let currentMonth = now.getMonth();
-
-    function formatDateOnly(str) {
-      if (!str) return '';
-      const strVal = String(str).trim();
-      if (strVal.match(/^\d{4}-\d{1,2}-\d{1,2}/)) {
-        const parts = strVal.split('T')[0].split('-');
-        const y = parseInt(parts[0], 10);
-        const m = String(parseInt(parts[1], 10)).padStart(2, '0');
-        const day = String(parseInt(parts[2], 10)).padStart(2, '0');
-        return `${y}-${m}-${day}`;
-      }
-      const d = new Date(strVal);
-      if (!isNaN(d.getTime())) {
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        return `${y}-${m}-${day}`;
-      }
-      return strVal;
+    function init() {
+      selectedDateStr = formatDateKey(new Date());
+      renderCalendar();
+      checkCouponExpiries();
     }
 
-    function formatNumber1Dec(num) {
-      const val = Number(num) || 0;
-      return val.toFixed(1);
+    function formatDateKey(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
     }
 
-    renderCalendar();
-    fetchData();
+    function setUserRole(role) {
+      currentUser = role;
+      document.getElementById('bannerBtnJ').classList.toggle('active', role === 'J');
+      document.getElementById('bannerBtnC').classList.toggle('active', role === 'C');
+      renderCalendar();
+    }
 
     function switchTab(tab) {
-      document.getElementById('tabBtnCalendar').classList.toggle('active', tab === 'calendar');
-      document.getElementById('tabBtnCoupons').classList.toggle('active', tab === 'coupons');
-      document.getElementById('tabBtnBill').classList.toggle('active', tab === 'bill');
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-view').forEach(view => view.classList.remove('active'));
       
-      document.getElementById('calendarView').classList.toggle('active', tab === 'calendar');
-      document.getElementById('couponsView').classList.toggle('active', tab === 'coupons');
-      document.getElementById('billView').classList.toggle('active', tab === 'bill');
+      event.target.classList.add('active');
+      document.getElementById(`tab-${tab}`).classList.add('active');
 
-      if (tab === 'coupons' || tab === 'bill') {
-        document.getElementById('actionBar').style.display = 'none';
-      } else if (isBulkMode) {
-        document.getElementById('actionBar').style.display = 'flex';
-      }
-    }
-
-    async function fetchData() {
-      const cachedData = localStorage.getItem('rice_db_data');
-      const cachedCoupons = localStorage.getItem('rice_coupons');
-      const cachedBill = localStorage.getItem('rice_bill');
-      const cachedCycle = localStorage.getItem('rice_cycle');
-
-      if (cachedData) {
-        try { dbData = JSON.parse(cachedData); renderCalendar(); } catch (e) {}
-      }
-      if (cachedCoupons) {
-        try { 
-          coupons = JSON.parse(cachedCoupons); 
-          renderCoupons(); 
-          checkExpiringCoupons();
-        } catch (e) {}
-      }
-      if (cachedBill) {
-        try {
-          billItems = JSON.parse(cachedBill);
-          if (cachedCycle) billCycle = JSON.parse(cachedCycle);
-          renderBill();
-        } catch (e) {}
-      }
-
-      try {
-        const response = await fetch(GOOGLE_SCRIPT_URL);
-        const freshData = await response.json();
-        
-        if (freshData) {
-          if (freshData.calendar) {
-            dbData = freshData.calendar;
-            localStorage.setItem('rice_db_data', JSON.stringify(dbData));
-            renderCalendar();
-          }
-
-          if (freshData.coupons) {
-            coupons = freshData.coupons;
-            localStorage.setItem('rice_coupons', JSON.stringify(coupons));
-            renderCoupons();
-            checkExpiringCoupons();
-          }
-
-          if (freshData.bill) {
-            billItems = freshData.bill;
-            if (freshData.cycle) billCycle = freshData.cycle;
-            localStorage.setItem('rice_bill', JSON.stringify(billItems));
-            localStorage.setItem('rice_cycle', JSON.stringify(billCycle));
-            renderBill();
-          }
-        }
-      } catch (e) {
-        console.error("Error fetching data:", e);
-      }
-    }
-
-    function checkExpiringCoupons() {
-      const banner = document.getElementById('couponAlertBanner');
-      if (!coupons || coupons.length === 0) {
-        banner.style.display = 'none';
-        return;
-      }
-
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      const expiringList = coupons.filter(c => {
-        const dateStr = formatDateOnly(c.expiry);
-        const expDate = new Date(dateStr);
-        const diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
-        return diffDays <= 7;
-      });
-
-      if (expiringList.length === 0) {
-        banner.style.display = 'none';
-        return;
-      }
-
-      banner.innerHTML = expiringList.map(c => {
-        const dateStr = formatDateOnly(c.expiry);
-        const expDate = new Date(dateStr);
-        const diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
-        const statusText = diffDays < 0 ? 'is expired' : (diffDays === 0 ? 'expires today' : `expires in ${diffDays} day(s)`);
-        
-        return `<div class="coupon-alert-item">⚠️ <strong>[Coupon] ${c.name}</strong> ${statusText} on ${dateStr}!</div>`;
-      }).join('');
-
-      banner.style.display = 'flex';
-    }
-
-    function renderBill() {
-      const list = document.getElementById('billList');
-      const totalEl = document.getElementById('billTotalAmount');
-      const cycleEl = document.getElementById('billCycleDates');
-
-      const cleanStart = formatDateOnly(billCycle.start);
-      const cleanEnd = formatDateOnly(billCycle.end);
-
-      if (cleanStart && cleanEnd) {
-        cycleEl.innerText = `Cycle: ${cleanStart} to ${cleanEnd}`;
-      } else {
-        cycleEl.innerText = `Cycle: Current Settlement`;
-      }
-
-      if (!billItems || billItems.length === 0) {
-        list.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 20px; font-weight: 600;">No active items for this cycle!</div>`;
-        totalEl.innerText = '$0.0';
-        return;
-      }
-
-      const deductionItems = billItems.filter(i => i.deduct);
-      const oneOffItems = billItems.filter(i => !i.recurring && !i.deduct);
-      const recurringItems = billItems.filter(i => i.recurring && !i.deduct);
-
-      const sortByDate = (a, b) => new Date(formatDateOnly(a.date)) - new Date(formatDateOnly(b.date));
-      oneOffItems.sort(sortByDate);
-      recurringItems.sort(sortByDate);
-      deductionItems.sort(sortByDate);
-
-      let total = 0;
-      let html = '';
-
-      const renderCard = (item, isDeduction = false) => {
-        const amt = Number(item.amount) || 0;
-        if (isDeduction) {
-          total -= amt;
-        } else {
-          total += amt;
-        }
-
-        const formattedAmt = formatNumber1Dec(amt);
-        const cleanDate = formatDateOnly(item.date);
-
-        return `
-          <div class="bill-item-card">
-            <div>
-              <div class="bill-item-desc">${item.description || 'Expense'}</div>
-              <div class="bill-item-meta">
-                <span class="bill-item-date">${cleanDate}</span>
-              </div>
-            </div>
-            <div class="bill-item-amount ${isDeduction ? 'deduct' : ''}">
-              ${isDeduction ? '-' : ''}$${formattedAmt}
-            </div>
-          </div>
-        `;
-      };
-
-      if (oneOffItems.length > 0) {
-        html += `<div class="bill-group-header">One-off Expenses</div>`;
-        html += oneOffItems.map(i => renderCard(i, false)).join('');
-      }
-
-      if (recurringItems.length > 0) {
-        html += `<div class="bill-group-header">Recurring Items</div>`;
-        html += recurringItems.map(i => renderCard(i, false)).join('');
-      }
-
-      if (deductionItems.length > 0) {
-        html += `<div class="bill-group-header">Deductions</div>`;
-        html += deductionItems.map(i => renderCard(i, true)).join('');
-      }
-
-      list.innerHTML = html;
-      totalEl.innerText = `$${formatNumber1Dec(total)}`;
-    }
-
-    async function exportBillAsImage() {
-      const captureElement = document.getElementById('billCaptureArea');
-      if (!captureElement) return;
-
-      try {
-        const canvas = await html2canvas(captureElement, {
-          scale: 2,
-          useCORS: true,
-          backgroundColor: '#F8FAFC'
-        });
-
-        const dateStr = billCycle.end ? formatDateOnly(billCycle.end) : new Date().toISOString().split('T')[0];
-        const fileName = `Mums_Bill_${dateStr}.jpg`;
-
-        canvas.toBlob(async (blob) => {
-          if (!blob) return;
-
-          if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: 'image/jpeg' })] })) {
-            try {
-              const file = new File([blob], fileName, { type: 'image/jpeg' });
-              await navigator.share({
-                title: "Mum's Bill",
-                files: [file]
-              });
-              return;
-            } catch (shareErr) {
-              if (shareErr.name === 'AbortError') return;
-            }
-          }
-
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.download = fileName;
-          link.href = url;
-          link.click();
-          URL.revokeObjectURL(url);
-        }, 'image/jpeg', 0.85);
-
-      } catch (err) {
-        console.error('Failed to export image:', err);
-        alert('Failed to generate image. Please try again.');
-      }
-    }
-
-    function setRole(role) {
-      currentUser = role;
-      document.getElementById('roleJoey').classList.toggle('active', role === 'joey');
-      document.getElementById('roleCarmen').classList.toggle('active', role === 'carmen');
-      renderCalendar();
-    }
-
-    function toggleBulkMode() {
-      isBulkMode = !isBulkMode;
-      selectedDates.clear();
-      updateActionBar();
-      
-      const btn = document.getElementById('bulkToggleBtn');
-      btn.classList.toggle('active', isBulkMode);
-      btn.innerText = isBulkMode ? 'Done Selecting' : 'Select Multiple';
-      document.getElementById('actionBar').style.display = isBulkMode ? 'flex' : 'none';
-      
-      renderCalendar();
-    }
-
-    function handleDateClick(dateStr) {
-      if (isBulkMode) {
-        if (selectedDates.has(dateStr)) {
-          selectedDates.delete(dateStr);
-        } else {
-          selectedDates.add(dateStr);
-        }
-        updateActionBar();
-        renderCalendar();
-      } else {
-        openDayDetail(dateStr);
-      }
-    }
-
-    function openDayDetail(dateStr) {
-      activeSingleDate = dateStr;
-      const dayData = dbData[dateStr] || {};
-      
-      const formatStatus = (st, rem) => {
-        let text = st === 'YES' ? '✓ Home' : (st === 'NO' ? '✕ Out' : 'TBC');
-        if (rem) text += ` — "${rem}"`;
-        return text;
-      };
-
-      document.getElementById('detailTitle').innerText = dateStr;
-      document.getElementById('detailJoey').innerText = formatStatus(dayData.joeyStatus, dayData.joeyRemarks);
-      document.getElementById('detailCarmen').innerText = formatStatus(dayData.carmenStatus, dayData.carmenRemarks);
-
-      const lastUpdatedBox = document.getElementById('detailLastUpdated');
-      if (dayData.lastUpdated) {
-        const formattedTime = new Date(dayData.lastUpdated).toLocaleString('en-US', {
-          month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-        });
-        lastUpdatedBox.innerHTML = `<span class="last-updated-badge">⏱ Last updated: ${formattedTime}</span>`;
-      } else {
-        lastUpdatedBox.innerHTML = '';
-      }
-
-      document.getElementById('detailModal').classList.add('open');
-    }
-
-    function editCurrentSingleDate() {
-      closeDetailModal();
-      selectedDates.clear();
-      selectedDates.add(activeSingleDate);
-      openEditModal();
+      if (tab === 'coupons') renderCoupons();
+      if (tab === 'bill') renderBill();
     }
 
     function changeMonth(delta) {
-      if (monthOffset + delta < 0 || monthOffset + delta > 2) return;
-      monthOffset += delta;
-      selectedDates.clear();
-      updateActionBar();
+      currentDate.setMonth(currentDate.getMonth() + delta);
       renderCalendar();
     }
 
-    function updateActionBar() {
-      const count = selectedDates.size;
-      document.getElementById('countYes').innerText = count;
-      document.getElementById('countNo').innerText = count;
-    }
-
     function renderCalendar() {
-      const targetDate = new Date(currentYear, currentMonth + monthOffset, 1);
-      const year = targetDate.getFullYear();
-      const month = targetDate.getMonth();
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
 
-      document.getElementById('monthTitle').innerText = targetDate.toLocaleString('default', { month: 'long', year: 'numeric' });
-      
-      document.getElementById('prevBtn').disabled = monthOffset <= 0;
-      document.getElementById('nextBtn').disabled = monthOffset >= 2;
+      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      document.getElementById('monthTitle').textContent = `${monthNames[month]} ${year}`;
 
-      const firstDayIndex = new Date(year, month, 1).getDay();
-      const totalDays = new Date(year, month + 1, 0).getDate();
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
 
       const grid = document.getElementById('calendarGrid');
       grid.innerHTML = '';
 
-      for (let i = 0; i < firstDayIndex; i++) {
-        grid.innerHTML += `<div class="day-card empty"></div>`;
+      // Blank padding days
+      for (let i = 0; i < firstDay; i++) {
+        const empty = document.createElement('div');
+        empty.className = 'day-card empty';
+        grid.appendChild(empty);
       }
 
-      const todayStr = formatDateOnly(new Date());
+      const todayStr = formatDateKey(new Date());
 
-      for (let day = 1; day <= totalDays; day++) {
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const dayData = dbData[dateStr] || {};
-        
-        const isToday = dateStr === todayStr;
-        const isSelected = selectedDates.has(dateStr);
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateObj = new Date(year, month, day);
+        const dateStr = formatDateKey(dateObj);
 
-        const joeySt = dayData.joeyStatus || '';
-        const carmenSt = dayData.carmenStatus || '';
+        const card = document.createElement('div');
+        card.className = 'day-card';
+        if (dateStr === todayStr) card.classList.add('today');
+        if (dateStr === selectedDateStr) card.classList.add('selected');
 
-        const joeyRem = (dayData.joeyRemarks || '').trim();
-        const carmenRem = (dayData.carmenRemarks || '').trim();
+        card.onclick = () => selectDate(dateStr);
 
-        let remarksHtml = '';
-        if (joeyRem) {
-          remarksHtml += `<div class="remarks-box" title="J: ${joeyRem}">J:${joeyRem}</div>`;
-        }
-        if (carmenRem) {
-          remarksHtml += `<div class="remarks-box" title="C: ${carmenRem}">C:${carmenRem}</div>`;
-        }
+        const dayData = mealData[dateStr] || {};
+        const jStatus = dayData.J?.status || 'UNSET';
+        const cStatus = dayData.C?.status || 'UNSET';
+        const jRemark = dayData.J?.remark || '';
+        const cRemark = dayData.C?.remark || '';
 
-        grid.innerHTML += `
-          <div class="day-card ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}" onclick="handleDateClick('${dateStr}')">
-            <div class="day-num">${day}</div>
-            <div class="day-content">
-              <div class="status-stack">
-                ${renderBadge('J', joeySt)}
-                ${renderBadge('C', carmenSt)}
-              </div>
-              <div class="remarks-container">
-                ${remarksHtml}
-              </div>
+        card.innerHTML = `
+          <div class="day-num">${day}</div>
+          <div class="day-content">
+            <div class="status-stack">
+              <span class="status-circle status-${jStatus.toLowerCase()}">J</span>
+              <span class="status-circle status-${cStatus.toLowerCase()}">C</span>
+            </div>
+            <div class="remarks-container">
+              ${jRemark ? `<div class="remarks-box">J: ${jRemark}</div>` : ''}
+              ${cRemark ? `<div class="remarks-box">C: ${cRemark}</div>` : ''}
             </div>
           </div>
         `;
+
+        grid.appendChild(card);
       }
     }
 
-    function renderBadge(shortName, status) {
-      if (status === 'YES') return `<div class="status-circle status-yes" title="Home">${shortName}</div>`;
-      if (status === 'NO') return `<div class="status-circle status-no" title="Out">${shortName}</div>`;
-      return `<div class="status-circle status-unset" title="TBC">${shortName}</div>`;
+    function selectDate(dateStr) {
+      selectedDateStr = dateStr;
+      renderCalendar();
     }
 
-    function selectModalStatus(status) {
-      pendingStatus = status;
-      document.getElementById('optYes').className = 'status-option' + (status === 'YES' ? ' selected-yes' : '');
-      document.getElementById('optNo').className = 'status-option' + (status === 'NO' ? ' selected-no' : '');
-      document.getElementById('optClear').className = 'status-option' + (status === '' ? ' selected-clear' : '');
+    function quickSetStatus(status) {
+      if (!selectedDateStr) return;
+      if (!mealData[selectedDateStr]) mealData[selectedDateStr] = {};
+      if (!mealData[selectedDateStr][currentUser]) mealData[selectedDateStr][currentUser] = {};
 
-      if (status === '') {
-        document.getElementById('remarkInput').value = '';
-      }
-    }
-
-    function batchUpdate(status) {
-      if (selectedDates.size === 0) {
-        alert("Please select one or more days first!");
-        return;
-      }
-      selectModalStatus(status);
-      document.getElementById('remarkInput').value = '';
-      openModal();
+      mealData[selectedDateStr][currentUser].status = status;
+      renderCalendar();
     }
 
     function openEditModal() {
-      if (selectedDates.size === 0) {
-        alert("Please select one or more days first!");
-        return;
-      }
-
-      const lastUpdatedBox = document.getElementById('lastUpdatedBox');
-
-      if (selectedDates.size === 1) {
-        const singleDate = Array.from(selectedDates)[0];
-        const dayData = dbData[singleDate] || {};
-        const currentSt = currentUser === 'joey' ? (dayData.joeyStatus || '') : (dayData.carmenStatus || '');
-        const currentRem = currentUser === 'joey' ? (dayData.joeyRemarks || '') : (dayData.carmenRemarks || '');
-
-        selectModalStatus(currentSt);
-        document.getElementById('remarkInput').value = currentRem;
-
-        if (dayData.lastUpdated) {
-          const formattedTime = new Date(dayData.lastUpdated).toLocaleString('en-US', {
-            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-          });
-          lastUpdatedBox.innerHTML = `<span class="last-updated-badge">⏱ Last updated: ${formattedTime}</span>`;
-        } else {
-          lastUpdatedBox.innerHTML = '';
-        }
-      } else {
-        selectModalStatus('');
-        document.getElementById('remarkInput').value = '';
-        lastUpdatedBox.innerHTML = '';
-      }
-
-      openModal();
-    }
-
-    function openModal() {
-      const displayUser = currentUser === 'joey' ? 'Joey' : 'Carmen';
-      document.getElementById('modalTitle').innerText = `Edit ${selectedDates.size} day(s) for ${displayUser}`;
-      document.getElementById('remarkModal').classList.add('open');
-    }
-
-    async function confirmBatchSave() {
-      const remarks = pendingStatus === '' ? '' : document.getElementById('remarkInput').value.trim();
-      const saveBtn = document.getElementById('saveBtn');
-      const datesArray = Array.from(selectedDates);
-      const nowIso = new Date().toISOString();
-
-      saveBtn.innerText = "Saving...";
-      saveBtn.disabled = true;
-
-      datesArray.forEach(dateStr => {
-        if (!dbData[dateStr]) dbData[dateStr] = {};
-        
-        if (currentUser === 'joey') {
-          dbData[dateStr].joeyStatus = pendingStatus;
-          dbData[dateStr].joeyRemarks = remarks;
-        } else {
-          dbData[dateStr].carmenStatus = pendingStatus;
-          dbData[dateStr].carmenRemarks = remarks;
-        }
-
-        const jSt = dbData[dateStr].joeyStatus || '';
-        const jRem = dbData[dateStr].joeyRemarks || '';
-        const cSt = dbData[dateStr].carmenStatus || '';
-        const cRem = dbData[dateStr].carmenRemarks || '';
-
-        if (!jSt && !jRem && !cSt && !cRem) {
-          delete dbData[dateStr];
-        } else {
-          dbData[dateStr].lastUpdated = nowIso;
-        }
-      });
-
-      localStorage.setItem('rice_db_data', JSON.stringify(dbData));
-      renderCalendar();
-
-      try {
-        const payload = JSON.stringify({
-          user: currentUser,
-          dates: datesArray,
-          status: pendingStatus,
-          remarks: remarks
-        });
-
-        await fetch(GOOGLE_SCRIPT_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: payload
-        });
-
-        setTimeout(fetchData, 2000);
-      } catch (err) {
-        console.error("Save error:", err);
-      }
-
-      saveBtn.innerText = "Save Updates";
-      saveBtn.disabled = false;
+      if (!selectedDateStr) return;
+      document.getElementById('modalDateTitle').textContent = `Details for ${selectedDateStr}`;
       
-      document.getElementById('remarkInput').value = '';
-      selectedDates.clear();
-      updateActionBar();
-      closeModal();
+      const currentData = mealData[selectedDateStr]?.[currentUser] || {};
+      modalSelectedStatus = currentData.status || 'UNSET';
+      document.getElementById('modalRemark').value = currentData.remark || '';
+
+      updateModalStatusUI();
+      document.getElementById('editModal').classList.add('open');
+    }
+
+    function selectModalStatus(status) {
+      modalSelectedStatus = status;
+      updateModalStatusUI();
+    }
+
+    function updateModalStatusUI() {
+      document.getElementById('optYes').className = `status-option ${modalSelectedStatus === 'YES' ? 'selected-yes' : ''}`;
+      document.getElementById('optNo').className = `status-option ${modalSelectedStatus === 'NO' ? 'selected-no' : ''}`;
+      document.getElementById('optClear').className = `status-option ${modalSelectedStatus === 'UNSET' ? 'selected-clear' : ''}`;
+    }
+
+    function saveMealDetails() {
+      if (!mealData[selectedDateStr]) mealData[selectedDateStr] = {};
+      if (!mealData[selectedDateStr][currentUser]) mealData[selectedDateStr][currentUser] = {};
+
+      mealData[selectedDateStr][currentUser].status = modalSelectedStatus;
+      mealData[selectedDateStr][currentUser].remark = document.getElementById('modalRemark').value;
+
+      document.getElementById('editModal').classList.remove('open');
       renderCalendar();
-    }
-
-    function closeModal() {
-      document.getElementById('remarkInput').value = '';
-      document.getElementById('remarkModal').classList.remove('open');
-    }
-
-    function closeDetailModal() {
-      document.getElementById('detailModal').classList.remove('open');
-    }
-
-    /* COUPON FUNCTIONS */
-    function renderCoupons() {
-      const list = document.getElementById('couponsList');
-      if (coupons.length === 0) {
-        list.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 20px; font-weight: 600;">No coupons added yet!</div>`;
-        return;
-      }
-
-      coupons.sort((a, b) => new Date(formatDateOnly(a.expiry)) - new Date(formatDateOnly(b.expiry)));
-
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      list.innerHTML = coupons.map((c, i) => {
-        const cleanExpiry = formatDateOnly(c.expiry);
-        const expDate = new Date(cleanExpiry);
-        const diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
-        
-        let badgeHtml = '';
-        if (diffDays < 0) {
-          badgeHtml = `<span class="badge-exp badge-danger">Expired</span>`;
-        } else if (diffDays <= 7) {
-          badgeHtml = `<span class="badge-exp badge-warning">Expires in ${diffDays} day(s)</span>`;
-        }
-
-        return `
-          <div class="coupon-card">
-            <div class="coupon-info">
-              <div class="coupon-title">${c.name}</div>
-              <div class="coupon-expiry">Expires: ${cleanExpiry}</div>
-              ${badgeHtml}
-            </div>
-            <button class="btn-delete" onclick="deleteCoupon(${i})">Used / Delete</button>
-          </div>
-        `;
-      }).join('');
     }
 
     function openAddCouponModal() {
-      document.getElementById('couponNameInput').value = '';
-      document.getElementById('couponExpiryInput').value = '';
       document.getElementById('couponModal').classList.add('open');
     }
 
-    async function saveCoupon() {
-      const name = document.getElementById('couponNameInput').value.trim();
-      const expiry = document.getElementById('couponExpiryInput').value;
+    function saveCoupon() {
+      const title = document.getElementById('couponTitle').value;
+      const expiry = document.getElementById('couponExpiry').value;
 
-      if (!name || !expiry) {
-        alert("Please fill in both the coupon name and expiry date.");
-        return;
-      }
-
-      coupons.push({ name, expiry });
-      localStorage.setItem('rice_coupons', JSON.stringify(coupons));
-      renderCoupons();
-      checkExpiringCoupons();
-      document.getElementById('couponModal').classList.remove('open');
-
-      await syncCouponsToGoogle();
-    }
-
-    async function deleteCoupon(index) {
-      if (confirm("Mark this coupon as used or delete it?")) {
-        coupons.splice(index, 1);
-        localStorage.setItem('rice_coupons', JSON.stringify(coupons));
+      if (title && expiry) {
+        coupons.push({ id: Date.now(), title, expiry });
+        document.getElementById('couponTitle').value = '';
+        document.getElementById('couponExpiry').value = '';
+        document.getElementById('couponModal').classList.remove('open');
         renderCoupons();
-        checkExpiringCoupons();
-        await syncCouponsToGoogle();
+        checkCouponExpiries();
       }
     }
 
-    async function syncCouponsToGoogle() {
-      try {
-        const payload = JSON.stringify({
-          action: "updateCoupons",
-          coupons: coupons
-        });
+    function deleteCoupon(id) {
+      coupons = coupons.filter(c => c.id !== id);
+      renderCoupons();
+      checkCouponExpiries();
+    }
 
-        await fetch(GOOGLE_SCRIPT_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: payload
-        });
+    function renderCoupons() {
+      const list = document.getElementById('couponsList');
+      list.innerHTML = coupons.length ? '' : '<p style="color:var(--text-muted); text-align:center; padding:20px;">No active coupons.</p>';
 
-        setTimeout(fetchData, 2000);
-      } catch (err) {
-        console.error("Error syncing coupons:", err);
+      coupons.forEach(c => {
+        const card = document.createElement('div');
+        card.className = 'coupon-card';
+        card.innerHTML = `
+          <div class="coupon-info">
+            <div class="coupon-title">${c.title}</div>
+            <div class="coupon-expiry">Expires: ${c.expiry}</div>
+          </div>
+          <button class="btn-delete" onclick="deleteCoupon(${c.id})">Delete</button>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    function checkCouponExpiries() {
+      const banner = document.getElementById('couponAlertBanner');
+      const today = new Date();
+      const expiringSoon = coupons.filter(c => {
+        const exp = new Date(c.expiry);
+        const diffDays = (exp - today) / (1000 * 60 * 60 * 24);
+        return diffDays >= 0 && diffDays <= 3;
+      });
+
+      if (expiringSoon.length > 0) {
+        banner.style.display = 'flex';
+        banner.innerHTML = expiringSoon.map(c => `
+          <div class="coupon-alert-item">⚠️ Coupon "${c.title}" expires soon (${c.expiry})!</div>
+        `).join('');
+      } else {
+        banner.style.display = 'none';
       }
     }
 
-    document.getElementById('remarkModal').addEventListener('click', (e) => {
-      if (e.target === document.getElementById('remarkModal')) closeModal();
-    });
+    function renderBill() {
+      document.getElementById('billCycleDates').textContent = `Cycle: ${document.getElementById('monthTitle').textContent}`;
+      document.getElementById('billTotalAmount').textContent = `₹0`;
+      document.getElementById('billBreakdownList').innerHTML = `<p style="color:var(--text-muted); text-align:center; padding:20px;">No billing items recorded for this period.</p>`;
+    }
 
-    document.getElementById('detailModal').addEventListener('click', (e) => {
-      if (e.target === document.getElementById('detailModal')) closeDetailModal();
-    });
+    function exportBill() {
+      alert("Exporting statement...");
+    }
 
-    document.getElementById('couponModal').addEventListener('click', (e) => {
-      if (e.target === document.getElementById('couponModal')) document.getElementById('couponModal').classList.remove('open');
-    });
+    // Close modals when clicking background
+    window.onclick = function(e) {
+      if (e.target.classList.contains('modal')) {
+        e.target.classList.remove('open');
+      }
+    };
+
+    init();
   </script>
 </body>
 </html>
