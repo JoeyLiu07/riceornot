@@ -65,7 +65,6 @@
       color: white;
     }
 
-    /* Tab Bar Navigation */
     .nav-tabs {
       display: flex;
       background: var(--card-bg);
@@ -112,6 +111,24 @@
       padding: 2px 8px;
       border-radius: 10px;
       font-weight: 800;
+    }
+
+    .coupon-alert-banner {
+      background: #FEF3C7;
+      border-bottom: 1px solid #FDE68A;
+      color: #92400E;
+      padding: 8px 16px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .coupon-alert-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .btn-mode {
@@ -409,7 +426,6 @@
       margin-top: 12px;
     }
 
-    /* Coupon Styles */
     .coupon-card {
       background: var(--card-bg);
       border: 1px solid var(--border);
@@ -453,8 +469,8 @@
   <header>
     <div class="brand">🍚 Rice or not?</div>
     <div class="role-toggle">
-      <button class="role-btn active" id="roleJoey" onclick="setRole('joey')">Joey</button>
-      <button class="role-btn" id="roleCarmen" onclick="setRole('carmen')">Carmen</button>
+      <button class="role-btn" id="roleJoey" onclick="setRole('joey')">Joey</button>
+      <button class="role-btn active" id="roleCarmen" onclick="setRole('carmen')">Carmen</button>
     </div>
   </header>
 
@@ -465,9 +481,11 @@
 
   <div id="calendarView" class="tab-view active">
     <div class="user-banner">
-      <div>Editing as: <span class="user-tag" id="bannerUser">Joey</span></div>
+      <div>Editing as: <span class="user-tag" id="bannerUser">Carmen</span></div>
       <button class="btn-mode" id="bulkToggleBtn" onclick="toggleBulkMode()">Select Multiple</button>
     </div>
+
+    <div id="couponAlertBanner" class="coupon-alert-banner" style="display: none;"></div>
 
     <div class="container">
       <div class="calendar-header">
@@ -548,7 +566,7 @@
       <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">EXPIRY DATE:</div>
       <input type="date" class="coupon-input" id="couponExpiryInput">
 
-      <button class="btn-save" onclick="saveCoupon()">Save Coupon</button>
+      <button class="btn-save" id="saveCouponBtn" onclick="saveCoupon()">Save Coupon</button>
     </div>
   </div>
 
@@ -560,7 +578,7 @@
     let coupons = [];
     let selectedDates = new Set();
     let pendingStatus = '';
-    let currentUser = 'joey';
+    let currentUser = 'carmen';
     let isBulkMode = false;
     let activeSingleDate = null;
 
@@ -570,7 +588,6 @@
 
     renderCalendar();
     fetchData();
-    loadCoupons();
 
     function switchTab(tab) {
       document.getElementById('tabBtnCalendar').classList.toggle('active', tab === 'calendar');
@@ -586,11 +603,16 @@
     }
 
     async function fetchData() {
-      const cached = localStorage.getItem('rice_db_data');
-      if (cached) {
-        try {
-          dbData = JSON.parse(cached);
-          renderCalendar();
+      const cachedData = localStorage.getItem('rice_db_data');
+      const cachedCoupons = localStorage.getItem('rice_coupons');
+      if (cachedData) {
+        try { dbData = JSON.parse(cachedData); renderCalendar(); } catch (e) {}
+      }
+      if (cachedCoupons) {
+        try { 
+          coupons = JSON.parse(cachedCoupons); 
+          renderCoupons(); 
+          checkExpiringCoupons();
         } catch (e) {}
       }
 
@@ -598,14 +620,59 @@
         const response = await fetch(GOOGLE_SCRIPT_URL);
         const freshData = await response.json();
         
-        if (freshData && typeof freshData === 'object') {
-          dbData = freshData;
-          localStorage.setItem('rice_db_data', JSON.stringify(dbData));
-          renderCalendar();
+        if (freshData) {
+          if (freshData.calendar) {
+            dbData = freshData.calendar;
+            localStorage.setItem('rice_db_data', JSON.stringify(dbData));
+            renderCalendar();
+          } else if (typeof freshData === 'object' && !freshData.coupons) {
+            dbData = freshData;
+            localStorage.setItem('rice_db_data', JSON.stringify(dbData));
+            renderCalendar();
+          }
+
+          if (freshData.coupons) {
+            coupons = freshData.coupons;
+            localStorage.setItem('rice_coupons', JSON.stringify(coupons));
+            renderCoupons();
+            checkExpiringCoupons();
+          }
         }
       } catch (e) {
         console.error("Error fetching data:", e);
       }
+    }
+
+    function checkExpiringCoupons() {
+      const banner = document.getElementById('couponAlertBanner');
+      if (!coupons || coupons.length === 0) {
+        banner.style.display = 'none';
+        return;
+      }
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const expiringList = coupons.filter(c => {
+        const expDate = new Date(c.expiry);
+        const diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
+        return diffDays <= 7;
+      });
+
+      if (expiringList.length === 0) {
+        banner.style.display = 'none';
+        return;
+      }
+
+      banner.innerHTML = expiringList.map(c => {
+        const expDate = new Date(c.expiry);
+        const diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
+        const statusText = diffDays < 0 ? 'is expired' : (diffDays === 0 ? 'expires today' : `expires in ${diffDays} day(s)`);
+        
+        return `<div class="coupon-alert-item">⚠️ <strong>${c.name}</strong> ${statusText} on ${c.expiry}!</div>`;
+      }).join('');
+
+      banner.style.display = 'flex';
     }
 
     function setRole(role) {
@@ -763,6 +830,7 @@
         return;
       }
       selectModalStatus(status);
+      document.getElementById('remarkInput').value = '';
       openModal();
     }
 
@@ -854,6 +922,7 @@
       saveBtn.innerText = "Save Updates";
       saveBtn.disabled = false;
       
+      document.getElementById('remarkInput').value = '';
       selectedDates.clear();
       updateActionBar();
       closeModal();
@@ -861,6 +930,7 @@
     }
 
     function closeModal() {
+      document.getElementById('remarkInput').value = '';
       document.getElementById('remarkModal').classList.remove('open');
     }
 
@@ -868,20 +938,7 @@
       document.getElementById('detailModal').classList.remove('open');
     }
 
-    /* COUPONS FUNCTIONS */
-    function loadCoupons() {
-      const saved = localStorage.getItem('rice_coupons');
-      if (saved) {
-        try { coupons = JSON.parse(saved); } catch (e) {}
-      }
-      renderCoupons();
-    }
-
-    function saveCouponsToStorage() {
-      localStorage.setItem('rice_coupons', JSON.stringify(coupons));
-      renderCoupons();
-    }
-
+    /* COUPON FUNCTIONS */
     function renderCoupons() {
       const list = document.getElementById('couponsList');
       if (coupons.length === 0) {
@@ -889,7 +946,6 @@
         return;
       }
 
-      // Sort by earliest expiry date
       coupons.sort((a, b) => new Date(a.expiry) - new Date(b.expiry));
 
       const today = new Date();
@@ -925,7 +981,7 @@
       document.getElementById('couponModal').classList.add('open');
     }
 
-    function saveCoupon() {
+    async function saveCoupon() {
       const name = document.getElementById('couponNameInput').value.trim();
       const expiry = document.getElementById('couponExpiryInput').value;
 
@@ -935,14 +991,41 @@
       }
 
       coupons.push({ name, expiry });
-      saveCouponsToStorage();
+      localStorage.setItem('rice_coupons', JSON.stringify(coupons));
+      renderCoupons();
+      checkExpiringCoupons();
       document.getElementById('couponModal').classList.remove('open');
+
+      await syncCouponsToGoogle();
     }
 
-    function deleteCoupon(index) {
+    async function deleteCoupon(index) {
       if (confirm("Mark this coupon as used or delete it?")) {
         coupons.splice(index, 1);
-        saveCouponsToStorage();
+        localStorage.setItem('rice_coupons', JSON.stringify(coupons));
+        renderCoupons();
+        checkExpiringCoupons();
+        await syncCouponsToGoogle();
+      }
+    }
+
+    async function syncCouponsToGoogle() {
+      try {
+        const payload = JSON.stringify({
+          action: "updateCoupons",
+          coupons: coupons
+        });
+
+        await fetch(GOOGLE_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: payload
+        });
+
+        setTimeout(fetchData, 1500);
+      } catch (err) {
+        console.error("Error syncing coupons:", err);
       }
     }
 
