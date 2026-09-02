@@ -602,7 +602,7 @@
   </div>
 
   <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMMwiLgqXued1vfMDe9W9tliRdhmlsXUi_a7pJGbI7p0CImpLCKqYg8O7P7OeM5EDoMg/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw7TgqVwS0y1_4eOT39wPnBMK-UhpZSSoT0ycc_XovV9D-FRgt86iM8Q1B6DyZVbdZMsA/exec";
 
     let monthOffset = 0;
     let dbData = {};
@@ -976,6 +976,11 @@
       document.getElementById('optYes').className = 'status-option' + (status === 'YES' ? ' selected-yes' : '');
       document.getElementById('optNo').className = 'status-option' + (status === 'NO' ? ' selected-no' : '');
       document.getElementById('optClear').className = 'status-option' + (status === '' ? ' selected-clear' : '');
+      
+      // Erase remarks text when Clear is selected
+      if (status === '') {
+        document.getElementById('remarkInput').value = '';
+      }
     }
 
     function batchUpdate(status) {
@@ -1047,7 +1052,14 @@
           dbData[dateStr].carmenStatus = pendingStatus;
           dbData[dateStr].carmenRemarks = remarks;
         }
-        dbData[dateStr].lastUpdated = nowIso;
+        
+        // Remove locally if both entries become empty
+        if (!dbData[dateStr].joeyStatus && !dbData[dateStr].joeyRemarks && 
+            !dbData[dateStr].carmenStatus && !dbData[dateStr].carmenRemarks) {
+          delete dbData[dateStr];
+        } else {
+          dbData[dateStr].lastUpdated = nowIso;
+        }
       });
 
       localStorage.setItem('rice_db_data', JSON.stringify(dbData));
