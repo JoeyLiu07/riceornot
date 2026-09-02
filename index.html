@@ -88,6 +88,20 @@
     .tab-view { display: none; }
     .tab-view.active { display: block; }
 
+    .coupon-alert-banner {
+      background: #FEF3C7;
+      border-bottom: 1px solid #FDE68A;
+      color: #92400E;
+      padding: 8px 16px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .coupon-alert-item { display: flex; align-items: center; gap: 6px; }
+
     .user-banner {
       background: #EEF2FF;
       border-bottom: 1px solid #C7D2FE;
@@ -107,20 +121,6 @@
       border-radius: 10px;
       font-weight: 800;
     }
-
-    .coupon-alert-banner {
-      background: #FEF3C7;
-      border-bottom: 1px solid #FDE68A;
-      color: #92400E;
-      padding: 8px 16px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .coupon-alert-item { display: flex; align-items: center; gap: 6px; }
 
     .btn-mode {
       background: white;
@@ -431,6 +431,35 @@
       cursor: pointer;
     }
 
+    /* Bill Tab Header Actions */
+    .bill-header-bar {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .btn-export-out {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--primary);
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      transition: all 0.2s ease;
+    }
+
+    .btn-export-out:active {
+      transform: scale(0.96);
+      background: var(--primary-light);
+    }
+
     .bill-summary-card {
       background: linear-gradient(135deg, #4F46E5, #3730A3);
       color: white;
@@ -439,7 +468,6 @@
       text-align: center;
       margin-bottom: 16px;
       box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
-      position: relative;
     }
 
     .bill-summary-title {
@@ -461,32 +489,6 @@
     }
 
     .bill-summary-amount { font-size: 2.2rem; font-weight: 800; margin-top: 4px; }
-
-    /* Subtle Glassmorphism Export Button inside Card */
-    .btn-export-subtle {
-      position: absolute;
-      top: 14px;
-      right: 14px;
-      background: rgba(255, 255, 255, 0.2);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      color: white;
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 0.72rem;
-      font-weight: 700;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      transition: all 0.2s ease;
-    }
-
-    .btn-export-subtle:active {
-      transform: scale(0.95);
-      background: rgba(255, 255, 255, 0.3);
-    }
 
     .bill-group-header {
       font-size: 0.8rem;
@@ -532,12 +534,13 @@
   </div>
 
   <div id="calendarView" class="tab-view active">
+    <!-- Coupon Alert Banner moved to top above user banner -->
+    <div id="couponAlertBanner" class="coupon-alert-banner" style="display: none;"></div>
+
     <div class="user-banner">
       <div>Editing as: <span class="user-tag" id="bannerUser">Carmen</span></div>
       <button class="btn-mode" id="bulkToggleBtn" onclick="toggleBulkMode()">Select Multiple</button>
     </div>
-
-    <div id="couponAlertBanner" class="coupon-alert-banner" style="display: none;"></div>
 
     <div class="container">
       <div class="calendar-header">
@@ -563,11 +566,15 @@
 
   <div id="billView" class="tab-view">
     <div class="container">
-      <div id="billCaptureArea" style="background: var(--bg); padding: 12px; border-radius: var(--radius);">
+      <!-- Export button outside/above card -->
+      <div class="bill-header-bar">
+        <button class="btn-export-out" onclick="exportBillAsImage()">
+          📤 Export List
+        </button>
+      </div>
+
+      <div id="billCaptureArea" style="background: var(--bg); padding: 4px; border-radius: var(--radius);">
         <div class="bill-summary-card">
-          <button class="btn-export-subtle" data-html2canvas-ignore="true" onclick="exportBillAsImage()">
-            📤 Export
-          </button>
           <div class="bill-summary-title">Total Payable</div>
           <div class="bill-cycle-dates" id="billCycleDates">Cycle: --</div>
           <div class="bill-summary-amount" id="billTotalAmount">$0.0</div>
@@ -880,11 +887,9 @@
         const dateStr = billCycle.end ? formatDateOnly(billCycle.end) : new Date().toISOString().split('T')[0];
         const fileName = `Mums_Bill_${dateStr}.jpg`;
 
-        // Convert canvas to blob as compressed JPEG (0.85 quality) for optimized file size
         canvas.toBlob(async (blob) => {
           if (!blob) return;
 
-          // Check if native Mobile Share API is available (iOS / Android)
           if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: 'image/jpeg' })] })) {
             try {
               const file = new File([blob], fileName, { type: 'image/jpeg' });
@@ -894,11 +899,10 @@
               });
               return;
             } catch (shareErr) {
-              if (shareErr.name === 'AbortError') return; // User canceled share sheet
+              if (shareErr.name === 'AbortError') return;
             }
           }
 
-          // Fallback download trigger for desktop browsers
           const url = URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.download = fileName;
