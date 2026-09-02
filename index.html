@@ -452,7 +452,6 @@
     }
     .badge-warning { background: #FEF3C7; color: var(--orange); }
     .badge-danger { background: #FEF2F2; color: var(--red); }
-    .badge-noexp { background: #ECFDF5; color: var(--green); }
 
     .btn-delete {
       background: #FEF2F2;
@@ -1283,7 +1282,7 @@
 
       list.innerHTML = coupons.map((c, i) => {
         let cleanExpiry = 'No Expiry';
-        let badgeHtml = '<span class="badge-exp badge-noexp">Infinite</span>';
+        let badgeHtml = '';
 
         if (c.expiry && c.expiry !== 'No Expiry') {
           cleanExpiry = formatDateOnly(c.expiry);
@@ -1294,8 +1293,6 @@
               badgeHtml = `<span class="badge-exp badge-danger">Expired</span>`;
             } else if (diffDays <= 7) {
               badgeHtml = `<span class="badge-exp badge-warning">Expires in ${diffDays} day(s)</span>`;
-            } else {
-              badgeHtml = '';
             }
           }
         }
