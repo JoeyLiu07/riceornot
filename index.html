@@ -480,16 +480,6 @@
     .bill-item-desc { font-weight: 800; font-size: 0.95rem; color: var(--text); }
     .bill-item-meta { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
     .bill-item-date { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); }
-    
-    .badge-tag {
-      font-size: 0.65rem;
-      font-weight: 800;
-      padding: 2px 6px;
-      border-radius: 6px;
-      text-transform: uppercase;
-    }
-
-    .badge-recurring { background: #EEF2FF; color: var(--primary); border: 1px solid #C7D2FE; }
     .bill-item-amount { font-weight: 800; font-size: 1rem; color: var(--primary); }
   </style>
 </head>
@@ -544,7 +534,7 @@
       <div class="bill-summary-card">
         <div class="bill-summary-title">Total Payable</div>
         <div class="bill-cycle-dates" id="billCycleDates">Cycle: --</div>
-        <div class="bill-summary-amount" id="billTotalAmount">$0.00</div>
+        <div class="bill-summary-amount" id="billTotalAmount">$0.0</div>
       </div>
       <div id="billList"></div>
     </div>
@@ -612,7 +602,7 @@
   </div>
 
   <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw9R9V5u-kDViPig2iW7YoRdaHWaJRy9UY7wqvr_mPiu_DGt3hWYK7_xOAoLm2ibR5hXA/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyQSEprWUTh26-TmcOiJbT1ZIF0-zg59Zvs4B8YEK7gYyC8T01BprgUoDH4rgw6v1lqkA/exec";
 
     let monthOffset = 0;
     let dbData = {};
@@ -642,6 +632,11 @@
         return `${y}-${m}-${day}`;
       }
       return String(str);
+    }
+
+    function formatNumber1Dec(num) {
+      const val = Number(num) || 0;
+      return val.toFixed(1);
     }
 
     renderCalendar();
@@ -757,34 +752,37 @@
       const totalEl = document.getElementById('billTotalAmount');
       const cycleEl = document.getElementById('billCycleDates');
 
-      // Update Cutoff/Cycle Display
-      if (billCycle && billCycle.start && billCycle.end) {
-        cycleEl.innerText = `Cycle: ${formatDateOnly(billCycle.start)} to ${formatDateOnly(billCycle.end)}`;
+      // 1. Cycle Range Display
+      const cleanStart = formatDateOnly(billCycle.start);
+      const cleanEnd = formatDateOnly(billCycle.end);
+
+      if (cleanStart && cleanEnd) {
+        cycleEl.innerText = `Cycle: ${cleanStart} to ${cleanEnd}`;
       } else {
         cycleEl.innerText = `Cycle: Current Settlement`;
       }
 
       if (!billItems || billItems.length === 0) {
         list.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 20px; font-weight: 600;">No active items for this cycle!</div>`;
-        totalEl.innerText = '$0.00';
+        totalEl.innerText = '$0.0';
         return;
       }
 
-      // Split items into One-off and Recurring
+      // Group into One-off vs Recurring
       const oneOffItems = billItems.filter(i => !i.recurring);
       const recurringItems = billItems.filter(i => i.recurring);
 
-      // Sort chronologically within each group
+      // Sort chronologically within group
       oneOffItems.sort((a, b) => new Date(formatDateOnly(a.date)) - new Date(formatDateOnly(b.date)));
       recurringItems.sort((a, b) => new Date(formatDateOnly(a.date)) - new Date(formatDateOnly(b.date)));
 
       let total = 0;
       let html = '';
 
-      const renderCard = (item, isRec) => {
+      const renderCard = (item) => {
         const amt = Number(item.amount) || 0;
         total += amt;
-        const formattedAmt = amt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const formattedAmt = formatNumber1Dec(amt);
         const cleanDate = formatDateOnly(item.date);
 
         return `
@@ -793,7 +791,6 @@
               <div class="bill-item-desc">${item.description || 'Expense'}</div>
               <div class="bill-item-meta">
                 <span class="bill-item-date">${cleanDate}</span>
-                ${isRec ? `<span class="badge-tag badge-recurring">Recurring</span>` : ''}
               </div>
             </div>
             <div class="bill-item-amount">$${formattedAmt}</div>
@@ -801,20 +798,20 @@
         `;
       };
 
-      // 1. One-off Section
+      // 1. Render One-off Expenses Section
       if (oneOffItems.length > 0) {
         html += `<div class="bill-group-header">One-off Expenses</div>`;
-        html += oneOffItems.map(i => renderCard(i, false)).join('');
+        html += oneOffItems.map(i => renderCard(i)).join('');
       }
 
-      // 2. Recurring Section
+      // 2. Render Recurring Items Section
       if (recurringItems.length > 0) {
         html += `<div class="bill-group-header">Recurring Items</div>`;
-        html += recurringItems.map(i => renderCard(i, true)).join('');
+        html += recurringItems.map(i => renderCard(i)).join('');
       }
 
       list.innerHTML = html;
-      totalEl.innerText = `$${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      totalEl.innerText = `$${formatNumber1Dec(total)}`;
     }
 
     function setRole(role) {
