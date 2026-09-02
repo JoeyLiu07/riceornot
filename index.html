@@ -218,7 +218,7 @@
       justify-content: flex-start;
       align-items: center;
       width: 100%;
-      padding-top: 18px; /* Fixed space clear of the top-left date */
+      padding-top: 17px;
     }
 
     .status-stack { 
@@ -226,15 +226,15 @@
       gap: 2px; 
       justify-content: center; 
       align-items: center; 
-      height: 24px;
+      height: 21px;
       margin-bottom: 2px;
     }
     
     .status-circle {
-      font-size: 0.75rem;
+      font-size: 0.68rem;
       font-weight: 800;
-      width: 22px;
-      height: 22px;
+      width: 19px;
+      height: 19px;
       border-radius: 50%;
       display: inline-flex;
       align-items: center;
@@ -558,7 +558,7 @@
   <div class="nav-tabs">
     <button class="tab-btn active" id="tabBtnCalendar" onclick="switchTab('calendar')">📅 Calendar</button>
     <button class="tab-btn" id="tabBtnCoupons" onclick="switchTab('coupons')">🎟️ Coupons</button>
-    <button class="tab-btn" id="tabBtnBill" onclick="switchTab('bill')">💳 Mum's Bill</button>
+    <button class="tab-btn" id="tabBtnBill" onclick="switchTab('bill')">💳 Monthly Bill</button>
   </div>
 
   <div id="calendarView" class="tab-view active">
@@ -919,7 +919,7 @@
         });
 
         const dateStr = billCycle.end ? formatDateOnly(billCycle.end) : new Date().toISOString().split('T')[0];
-        const fileName = `Mums_Bill_${dateStr}.jpg`;
+        const fileName = `Monthly_Bill_${dateStr}.jpg`;
 
         canvas.toBlob(async (blob) => {
           if (!blob) return;
@@ -928,7 +928,7 @@
             try {
               const file = new File([blob], fileName, { type: 'image/jpeg' });
               await navigator.share({
-                title: "Mum's Bill",
+                title: "Monthly Bill",
                 files: [file]
               });
               return;
